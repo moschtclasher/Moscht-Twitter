@@ -5,8 +5,21 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Mon, 20 Jul 2026 11:33:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 20 Jul 2026 15:10:18 +0000</lastBuildDate>
     <generator>GitHub Actions über https://nitter.net</generator>
+    <item>
+      <title>10 days left🥳 #ClashOfClans #CoC</title>
+      <description>10 days left🥳 
+
+
+
+#ClashOfClans #CoC</description>
+      <link>https://x.com/moscht_coc/status/2079181093371044165</link>
+      <guid isPermaLink="false">2079181093371044165</guid>
+      <pubDate>Mon, 20 Jul 2026 12:26:16 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/2079181093371044165.jpg" type="image/jpeg" length="169836" />
+      <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/2079181093371044165.jpg" medium="image" type="image/jpeg" />
+    </item>
     <item>
       <title>Probably should do a little warm-up before my legend 1 hits hahahaha #ClashOfClans #coc #Legend1</title>
       <description>Probably should do a little warm-up before my legend 1 hits hahahaha
@@ -239,37 +252,6 @@ Hyped for more...</description>
       <pubDate>Thu, 02 Jul 2026 07:21:14 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/2072581347323805851.jpg" type="image/jpeg" length="57463" />
       <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/2072581347323805851.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>RT by @moscht_coc: Last month didn't go as planned, but with our roster additions we're ready to come back stronger this month! Roster: 🪄 🇩🇪 @magicfnr 🇩🇪 @Clash_Bone (C) 🇦🇹 @moscht_coc 🇩🇪 @Passi2165 🇩🇪 @Holzbein88 🇩🇪 @ pizzabote Next stop, stage 2 🥹</title>
-      <description>Last month didn't go as planned, but with our roster additions we're ready to come back stronger this month!
-
-
-
-Roster: 🪄
-
-
-
-🇩🇪 @magicfnr
-
-🇩🇪 @Clash_Bone (C)
-
-🇦🇹 @moscht_coc
-
-🇩🇪 @Passi2165
-
-🇩🇪 @Holzbein88
-
-🇩🇪 @ pizzabote
-
-
-
-Next stop, stage 2 🥹</description>
-      <link>https://x.com/horizon_coc/status/2072056542652674235</link>
-      <guid isPermaLink="false">2072056542652674235</guid>
-      <pubDate>Tue, 30 Jun 2026 20:35:51 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/2072056542652674235.jpg" type="image/jpeg" length="158076" />
-      <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/2072056542652674235.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
