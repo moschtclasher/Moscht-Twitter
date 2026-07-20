@@ -21,8 +21,10 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: RSS-Datei erzeugen
-        run: python bot.py
+      - name: Generate RSS feeds
+        run: |
+          python bot.py
+          python bot_confusion.py
 
       - name: RSS-Datei und Bilder speichern
         run: |
