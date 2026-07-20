@@ -447,6 +447,9 @@ def create_own_feed(
             ).text = pub_date
 
         if public_image_url:
+            image_path = IMAGES_DIRECTORY / Path(public_image_url).name
+            image_size = image_path.stat().st_size
+
             enclosure = ET.SubElement(
                 item,
                 "enclosure",
@@ -461,7 +464,7 @@ def create_own_feed(
             )
             enclosure.set(
                 "length",
-                "0",
+                str(image_size),
             )
 
             media_content = ET.SubElement(
