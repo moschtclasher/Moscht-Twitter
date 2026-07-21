@@ -115,6 +115,7 @@ def send_to_discord(post, feed):
 
     payload = {
         "username": feed["display_name"],
+        "avatar_url": feed["avatar_url"],
         "embeds": [
             create_embed(post, feed)
         ]
