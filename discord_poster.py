@@ -136,7 +136,10 @@ def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
     embed = {
-        "description": clean_description(post["description"]),
+        "description": (
+            clean_description(post["description"])
+            + f"\n\n🔗 [𝕏 Beitrag ansehen]({post['link']})"
+        ),
         "url": post["link"],
         "color": feed["color"],
         "timestamp": parse_timestamp(post["pubDate"]),
