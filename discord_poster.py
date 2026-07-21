@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -112,12 +113,30 @@ def parse_timestamp(pub_date):
 
     except Exception:
         return None
-        
+
+
+# ===== HIER EINFÜGEN =====
+
+def clean_description(text):
+    """Entfernt überflüssige Leerzeilen."""
+
+    if not text:
+        return ""
+
+    # Windows-Zeilenumbrüche vereinheitlichen
+    text = text.replace("\r\n", "\n")
+
+    # Mehr als zwei aufeinanderfolgende Zeilenumbrüche auf genau zwei reduzieren
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text.strip()
+
+
 def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
     embed = {
-        "description": post["description"] or "",
+        "description": clean_description(post["description"]),
         "url": post["link"],
         "color": feed["color"],
         "timestamp": parse_timestamp(post["pubDate"]),
