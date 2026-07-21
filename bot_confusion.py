@@ -24,7 +24,7 @@ PAGES_BASE_URL = (
     f"https://{GITHUB_USERNAME}.github.io/{GITHUB_REPOSITORY}"
 )
 
-IMAGES_DIRECTORY = Path("images")
+IMAGES_DIRECTORY = Path("images/confusion_coc")
 
 NITTER_INSTANCES = [
     "https://nitter.net",
