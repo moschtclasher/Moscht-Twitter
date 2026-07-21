@@ -96,7 +96,6 @@ def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
     embed = {
-        "title": post["title"] or "Neuer X-Post",
         "description": post["description"] or "",
         "url": post["link"],
         "color": feed["color"],
