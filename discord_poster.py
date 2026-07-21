@@ -20,6 +20,7 @@ FEEDS = [
         "webhook": os.environ["DISCORD_WEBHOOK_MOSCHT"],
         "display_name": "Moscht Twitter/X",
         "avatar_url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_avatar.png",
+        "footer": "@moscht_coc",
         "history": 5,
         "color": 0x1DA1F2,
     },
@@ -28,6 +29,7 @@ FEEDS = [
         "webhook": os.environ["DISCORD_WEBHOOK_CONFUSION"],
         "display_name": "CNF | Twitter/X",
         "avatar_url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_avatar.png",
+        "footer": "@Confusion_CoC",
         "history": 5,
         "color": 0x5865F2,
     },
@@ -119,6 +121,9 @@ def create_embed(post, feed):
         "url": post["link"],
         "color": feed["color"],
         "timestamp": parse_timestamp(post["pubDate"]),
+        "footer": {
+            "text": feed["footer"]
+        },
     }
 
     if post["image"]:
