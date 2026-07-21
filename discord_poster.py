@@ -118,13 +118,21 @@ def parse_timestamp(pub_date):
 # ===== HIER EINFÜGEN =====
 
 def clean_description(text):
-    """Entfernt überflüssige Leerzeilen."""
+    """Bereinigt den Tweettext."""
 
     if not text:
         return ""
 
     # Windows-Zeilenumbrüche vereinheitlichen
     text = text.replace("\r\n", "\n")
+
+    # Nitter-, X- und Twitter-Links entfernen
+    text = re.sub(
+        r"https?://(?:nitter\.[^\s]+|x\.com|twitter\.com)/\S+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
 
     # Mehr als zwei aufeinanderfolgende Zeilenumbrüche auf genau zwei reduzieren
     text = re.sub(r"\n{3,}", "\n\n", text)
