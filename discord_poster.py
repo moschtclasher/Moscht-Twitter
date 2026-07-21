@@ -15,14 +15,14 @@ FEEDS = [
     {
         "feed_file": "feed.xml",
         "webhook": os.environ["DISCORD_WEBHOOK_MOSCHT"],
-        "display_name": "Moscht CoC",
+        "display_name": "Moscht Twitter/X",
         "history": 5,
         "color": 0x1DA1F2,
     },
     {
         "feed_file": "feed-confusion.xml",
         "webhook": os.environ["DISCORD_WEBHOOK_CONFUSION"],
-        "display_name": "Confusion CoC",
+        "display_name": "CNF | Twitter/X",
         "history": 5,
         "color": 0x5865F2,
     },
