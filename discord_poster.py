@@ -1,4 +1,5 @@
-import json
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetimeimport json
 import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -91,7 +92,23 @@ def read_feed(feed_file):
     # ==========================================================
 # Discord
 # ==========================================================
+def parse_timestamp(pub_date):
+    """Wandelt RSS-Datum in ISO-8601 für Discord um."""
 
+    if not pub_date:
+        return None
+
+    try:
+        dt = parsedate_to_datetime(pub_date)
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+
+        return dt.astimezone(timezone.utc).isoformat()
+
+    except Exception:
+        return None
+        
 def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
@@ -99,6 +116,7 @@ def create_embed(post, feed):
         "description": post["description"] or "",
         "url": post["link"],
         "color": feed["color"],
+        "timestamp": parse_timestamp(post["pubDate"]),
     }
 
     if post["image"]:
