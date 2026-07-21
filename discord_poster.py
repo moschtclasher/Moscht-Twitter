@@ -23,7 +23,7 @@ FEEDS = [
         "avatar_url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_avatar.png",
         "footer": "<:twitter:1506398966559019088> • @moscht_coc",
         "history": 5,
-        "color": 0x1DA1F2,
+        "color": 0xFFF533,
     },
     {
         "feed_file": "feed-confusion.xml",
@@ -32,7 +32,7 @@ FEEDS = [
         "avatar_url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_avatar.png",
         "footer": "<:twitter:1506398966559019088> • @Confusion_CoC",
         "history": 5,
-        "color": 0x5865F2,
+        "color": 0xFFF533,
     },
 ]
 
