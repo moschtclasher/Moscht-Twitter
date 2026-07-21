@@ -1,8 +1,10 @@
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetimeimport json
+import json
 import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
 import requests
 
