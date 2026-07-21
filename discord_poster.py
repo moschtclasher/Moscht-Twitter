@@ -5,27 +5,37 @@ from pathlib import Path
 
 import requests
 
+# ==========================================================
+# Konfiguration
+# ==========================================================
+
 STATE_FILE = "last_posts.json"
 
 FEEDS = [
     {
-        "feed": "feed.xml",
+        "feed_file": "feed.xml",
         "webhook": os.environ["DISCORD_WEBHOOK_MOSCHT"],
-        "name": "Moscht CoC",
+        "display_name": "Moscht CoC",
         "history": 5,
         "color": 0x1DA1F2,
     },
     {
-        "feed": "feed-confusion.xml",
+        "feed_file": "feed-confusion.xml",
         "webhook": os.environ["DISCORD_WEBHOOK_CONFUSION"],
-        "name": "Confusion",
+        "display_name": "Confusion CoC",
         "history": 5,
         "color": 0x5865F2,
     },
 ]
 
 
+# ==========================================================
+# State
+# ==========================================================
+
 def load_state():
+    """Lädt den zuletzt geposteten Stand."""
+
     if not Path(STATE_FILE).exists():
         return {}
 
@@ -37,12 +47,20 @@ def load_state():
 
 
 def save_state(state):
+    """Speichert den zuletzt geposteten Stand."""
+
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2)
 
 
-def read_feed(filename):
-    tree = ET.parse(filename)
+# ==========================================================
+# RSS Feed
+# ==========================================================
+
+def read_feed(feed_file):
+    """Liest einen RSS Feed."""
+
+    tree = ET.parse(feed_file)
     root = tree.getroot()
 
     posts = []
@@ -65,15 +83,21 @@ def read_feed(filename):
                 "pubDate": item.findtext("pubDate", ""),
                 "image": image,
             }
-            def send_to_discord(post, webhook, feed):
-    """Sendet einen Beitrag als Discord-Embed."""
+        )
+
+    return posts
+    # ==========================================================
+# Discord
+# ==========================================================
+
+def create_embed(post, feed):
+    """Erstellt ein Discord-Embed."""
 
     embed = {
         "title": post["title"] or "Neuer X-Post",
-        "description": post["description"],
+        "description": post["description"] or "",
         "url": post["link"],
         "color": feed["color"],
-        "timestamp": None,
     }
 
     if post["image"]:
@@ -81,64 +105,87 @@ def read_feed(filename):
             "url": post["image"]
         }
 
+    return embed
+
+
+def send_to_discord(post, feed):
+    """Sendet einen Beitrag an Discord."""
+
     payload = {
-        "username": feed["name"],
-        "embeds": [embed],
+        "username": feed["display_name"],
+        "embeds": [
+            create_embed(post, feed)
+        ]
     }
 
-    response = requests.post(
-        webhook,
-        json=payload,
-        timeout=30,
-    )
-
-    if response.status_code == 204:
-        print(f"✅ {post['guid']} gesendet")
-    else:
-        print(
-            f"❌ Discord Fehler {response.status_code}"
+    try:
+        response = requests.post(
+            feed["webhook"],
+            json=payload,
+            timeout=30,
         )
-        print(response.text)
 
+        if response.status_code == 204:
+            print(f"✅ Gesendet: {post['guid']}")
+            return True
+
+        print(f"❌ Discord Fehler: {response.status_code}")
+        print(response.text)
+        return False
+
+    except requests.RequestException as e:
+        print(f"❌ Netzwerkfehler: {e}")
+        return False
+
+
+# ==========================================================
+# Feed Verarbeitung
+# ==========================================================
 
 def process_feed(feed, state):
 
-    print(f"\n===== {feed['feed']} =====")
+    print("")
+    print("=" * 60)
+    print(feed["feed_file"])
+    print("=" * 60)
 
-    posts = read_feed(feed["feed"])
+    posts = read_feed(feed["feed_file"])
 
     if not posts:
         print("Keine Beiträge gefunden.")
         return
 
-    last_guid = state.get(feed["feed"])
+    last_guid = state.get(feed["feed_file"])
 
-    #
+    # ------------------------------------------------------
     # Erster Start
-    #
+    # ------------------------------------------------------
+
     if last_guid is None:
 
-        print("Erster Start.")
+        print("➡️ Erster Start - sende letzte Beiträge")
 
-        history = list(
+        history_posts = list(
             reversed(
-                posts[: feed["history"]]
+                posts[:feed["history"]]
             )
         )
 
-        for post in history:
+        for post in history_posts:
+
             send_to_discord(
                 post,
-                feed["webhook"],
                 feed,
             )
 
-        state[feed["feed"]] = posts[0]["guid"]
+        state[feed["feed_file"]] = posts[0]["guid"]
+
         return
 
-    #
-    # Neue Beiträge sammeln
-    #
+    # ------------------------------------------------------
+    # Neue Beiträge finden
+    # ------------------------------------------------------
+
     new_posts = []
 
     for post in posts:
@@ -149,40 +196,41 @@ def process_feed(feed, state):
         new_posts.append(post)
 
     if not new_posts:
-
         print("Keine neuen Beiträge.")
         return
 
-    #
-    # Vom ältesten zum neuesten posten
-    #
+    print(f"{len(new_posts)} neue Beiträge gefunden.")
+
     for post in reversed(new_posts):
 
         send_to_discord(
             post,
-            feed["webhook"],
             feed,
         )
 
-    state[feed["feed"]] = posts[0]["guid"]
-
+    state[feed["feed_file"]] = posts[0]["guid"]
+    # ==========================================================
+# Main
+# ==========================================================
 
 def main():
+    print("=" * 60)
+    print("Discord Poster gestartet")
+    print("=" * 60)
 
     state = load_state()
 
     for feed in FEEDS:
-
-        process_feed(
-            feed,
-            state,
-        )
+        try:
+            process_feed(feed, state)
+        except Exception as e:
+            print(f"❌ Fehler in {feed['feed_file']}: {e}")
 
     save_state(state)
+
+    print("")
+    print("✅ Fertig.")
 
 
 if __name__ == "__main__":
     main()
-        )
-
-    return posts
