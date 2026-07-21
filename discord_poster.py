@@ -138,7 +138,7 @@ def create_embed(post, feed):
     embed = {
         "description": (
             clean_description(post["description"])
-            + f"\n\n🔗 [𝕏 Beitrag ansehen]({post['link']})"
+            + f"\n\n🔗 [Beitrag ansehen]({post['link']})"
         ),
         "url": post["link"],
         "color": feed["color"],
