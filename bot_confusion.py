@@ -281,7 +281,7 @@ def download_image(
         output_path.write_bytes(data)
 
         public_url = (
-            f"{PAGES_BASE_URL}/{output_path.as_posix()"
+            f"{PAGES_BASE_URL}/{output_path.as_posix()}"
         )
 
         print(
