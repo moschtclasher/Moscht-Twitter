@@ -187,6 +187,11 @@ def format_repost(text):
 def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
+    print("\n==========================")
+    print("DESCRIPTION:")
+    print(repr(post["description"]))
+    print("==========================\n")
+    
     embed = {
         "description": (
             clean_description(post["description"])
