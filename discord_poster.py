@@ -147,31 +147,29 @@ def clean_description(text, post):
     if not text:
         return ""
 
-    # Windows-Zeilenumbrüche vereinheitlichen
-    text = text.replace("\r\n", "\n")
+    # Zeilenumbrüche vereinheitlichen
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-# --------------------------------------------------
-# Repost (ohne eigenen Kommentar)
-# --------------------------------------------------
-if post.get("is_repost"):
+    # --------------------------------------------------
+    # Repost ohne eigenen Kommentar
+    # --------------------------------------------------
+    if post.get("is_repost"):
+        username = post.get("original_author")
 
-    username = post.get("original_author")
+        # Fallback, falls der Autor nicht aus dem Link gelesen werden konnte
+        if not username:
+            username = post.get("reposted_by", "")
 
-    # Fallback, falls der Autor nicht aus dem Link gelesen werden konnte
-    if not username:
-        username = post.get("reposted_by", "")
-
-    if username:
-        text = (
-            f"🔁 **Repost von @{username}**\n\n"
-            f"{text}"
-        )
+        if username:
+            text = (
+                f"🔁 **Repost von @{username}**\n\n"
+                f"{text}"
+            )
 
     # --------------------------------------------------
     # Quote-Post erkennen
     # --------------------------------------------------
     else:
-
         quote_match = re.search(
             r"^(.*?)\n+(.+?) \(@([A-Za-z0-9_]+)\)\n+(.*)$",
             text,
@@ -179,7 +177,6 @@ if post.get("is_repost"):
         )
 
         if quote_match:
-
             comment = quote_match.group(1).strip()
             username = quote_match.group(3).strip()
             quoted = quote_match.group(4).strip()
@@ -192,18 +189,16 @@ if post.get("is_repost"):
             )
 
     # --------------------------------------------------
-    # Nitter/X/Twitter Links entfernen
+    # Nitter-/X-/Twitter-Links entfernen
     # --------------------------------------------------
     text = re.sub(
-        r"\n*—?\s*https?://(?:nitter\.[^\s]+|x\.com|twitter\.com)/\S+",
+        r"\n*—?\s*https?://(?:nitter\.[^\s]+|(?:www\.)?x\.com|(?:www\.)?twitter\.com)/\S+",
         "",
         text,
         flags=re.IGNORECASE,
     )
 
-    # --------------------------------------------------
     # Maximal eine Leerzeile
-    # --------------------------------------------------
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
