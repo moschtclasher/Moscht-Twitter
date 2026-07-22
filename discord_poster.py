@@ -66,7 +66,7 @@ def save_state(state):
 # ==========================================================
 
 def read_feed(feed_file):
-    """Liest einen RSS Feed."""
+    """Liest einen RSS-Feed ein."""
 
     tree = ET.parse(feed_file)
     root = tree.getroot()
@@ -74,7 +74,6 @@ def read_feed(feed_file):
     posts = []
 
     for item in root.findall("./channel/item"):
-
         enclosure = item.find("enclosure")
 
         image = ""
@@ -82,15 +81,17 @@ def read_feed(feed_file):
         if enclosure is not None:
             image = enclosure.attrib.get("url", "")
 
+        title = item.findtext("title", "") or ""
+
         posts.append(
             {
-                "guid": item.findtext("guid", ""),
-                "title": item.findtext("title", ""),
-                "description": item.findtext("description", ""),
-                "link": item.findtext("link", ""),
-                "pubDate": item.findtext("pubDate", ""),
+                "guid": item.findtext("guid", "") or "",
+                "title": title,
+                "description": item.findtext("description", "") or "",
+                "link": item.findtext("link", "") or "",
+                "pubDate": item.findtext("pubDate", "") or "",
                 "image": image,
-                "is_repost": title.startswith("RT by @"),
+                "is_repost": title.strip().lower().startswith("rt by @"),
             }
         )
 
@@ -119,45 +120,61 @@ def parse_timestamp(pub_date):
 # ===== HIER EINFÜGEN =====
 
 def clean_description(text, post):
-    """Bereinigt den Tweettext und formatiert Quote-Posts."""
+    """Bereinigt und formatiert den Tweettext."""
 
     if not text:
         return ""
-    # Repost erkennen (ohne eigenen Kommentar)
-    if post.get("is_repost"):
-
-        username = post["title"].split(":")[0].replace("RT by @", "").strip()
-
-        text = (
-            f"🔁 **Repost von @{username}**\n\n"
-            f"{text}"
-        )
 
     # Windows-Zeilenumbrüche vereinheitlichen
     text = text.replace("\r\n", "\n")
 
-    # Quote-Post erkennen:
-    # Eigener Kommentar + Account (Name @Username) + zitierter Beitrag
-    match = re.search(
-        r"^(.*?)\n+(.+?) \(@([A-Za-z0-9_]+)\)\n+(.*)$",
-        text,
-        flags=re.DOTALL,
-    )
+    # --------------------------------------------------
+    # Repost (ohne eigenen Kommentar)
+    # --------------------------------------------------
+    if post.get("is_repost"):
 
-    if match:
-        comment = match.group(1).strip()
-        name = match.group(2).strip()
-        username = match.group(3).strip()
-        quoted = match.group(4).strip()
-
-        text = (
-            f"{comment}\n\n"
-            "──────────────────\n\n"
-            f"🔁 **Repost von @{username}**\n\n"
-            f"{quoted}"
+        repost_match = re.match(
+            r"^RT by @([A-Za-z0-9_]+):",
+            post["title"],
+            flags=re.IGNORECASE,
         )
 
-    # Nitter-, X- und Twitter-Links am Ende entfernen
+        if repost_match:
+
+            username = repost_match.group(1)
+
+            text = (
+                f"🔁 **Repost von @{username}**\n\n"
+                f"{text}"
+            )
+
+    # --------------------------------------------------
+    # Quote-Post erkennen
+    # --------------------------------------------------
+    else:
+
+        quote_match = re.search(
+            r"^(.*?)\n+(.+?) \(@([A-Za-z0-9_]+)\)\n+(.*)$",
+            text,
+            flags=re.DOTALL,
+        )
+
+        if quote_match:
+
+            comment = quote_match.group(1).strip()
+            username = quote_match.group(3).strip()
+            quoted = quote_match.group(4).strip()
+
+            text = (
+                f"{comment}\n\n"
+                "──────────────────\n\n"
+                f"🔁 **Repost von @{username}**\n\n"
+                f"{quoted}"
+            )
+
+    # --------------------------------------------------
+    # Nitter/X/Twitter Links entfernen
+    # --------------------------------------------------
     text = re.sub(
         r"\n*—?\s*https?://(?:nitter\.[^\s]+|x\.com|twitter\.com)/\S+",
         "",
@@ -165,7 +182,9 @@ def clean_description(text, post):
         flags=re.IGNORECASE,
     )
 
-    # Mehr als zwei Zeilenumbrüche auf zwei reduzieren
+    # --------------------------------------------------
+    # Maximal eine Leerzeile
+    # --------------------------------------------------
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
