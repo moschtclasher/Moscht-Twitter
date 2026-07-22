@@ -140,6 +140,50 @@ def clean_description(text):
     return text.strip()
 
 
+def format_repost(text):
+
+    """Erkennt Reposts und formatiert sie schöner."""
+
+    if not text:
+
+        return text
+
+    lines = text.splitlines()
+
+    if not lines:
+
+        return text
+
+    first_line = lines[0].strip()
+
+    # Muster: RNxHZN (@RNxHZN)
+
+    match = re.match(
+
+        r"^(.+?)\s+\(@([A-Za-z0-9_]+)\)$",
+
+        first_line,
+
+    )
+
+    if not match:
+
+        return text
+
+    name = match.group(1)
+
+    username = match.group(2)
+
+    remaining = "\n".join(lines[1:]).lstrip()
+
+    return (
+
+        f"🔁 **Repost von {name} (@{username})**\n\n"
+
+        f"{remaining}"
+
+    )
+
 def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
