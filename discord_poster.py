@@ -143,7 +143,7 @@ def clean_description(text):
         text = (
             f"{comment}\n\n"
             "──────────────────\n\n"
-            f"🔁 **Repost von {name} (@{username})**\n\n"
+            f"🔁 **Repost von @{username}**\n\n"
             f"{quoted}"
         )
 
