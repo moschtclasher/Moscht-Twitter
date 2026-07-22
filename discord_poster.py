@@ -150,10 +150,11 @@ def clean_description(text, post):
     # Windows-Zeilenumbrüche vereinheitlichen
     text = text.replace("\r\n", "\n")
 
-    # --------------------------------------------------
-    # Repost (ohne eigenen Kommentar)
-    # --------------------------------------------------
-    if post.get("is_repost"):
+# --------------------------------------------------
+# Repost (ohne eigenen Kommentar)
+# --------------------------------------------------
+if post.get("is_repost"):
+
     username = post.get("original_author")
 
     # Fallback, falls der Autor nicht aus dem Link gelesen werden konnte
