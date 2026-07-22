@@ -24,6 +24,8 @@ FEEDS = [
         "footer": "𝕏 • @moscht_coc",
         "history": 5,
         "color": 0xFFF533,
+        "mention": "<@&1528735528772571137>",
+        "emoji": "<a:blitzcnf:1475376256970260582>",
     },
     {
         "feed_file": "feed-confusion.xml",
@@ -33,6 +35,8 @@ FEEDS = [
         "footer": "𝕏 • @Confusion_CoC",
         "history": 5,
         "color": 0xFFF533,
+        "mention": "<@&1506407793866047579>",
+        "emoji": "<a:blitzcnf:1475376256970260582>",
     },
 ]
 
@@ -237,6 +241,7 @@ def send_to_discord(post, feed):
     payload = {
         "username": feed["display_name"],
         "avatar_url": feed["avatar_url"],
+        "content": f"{feed['mention']} {feed['emoji']}",
         "embeds": [
             create_embed(post, feed)
         ]
