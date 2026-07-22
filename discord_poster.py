@@ -90,6 +90,7 @@ def read_feed(feed_file):
                 "link": item.findtext("link", ""),
                 "pubDate": item.findtext("pubDate", ""),
                 "image": image,
+                "is_repost": title.startswith("RT by @"),
             }
         )
 
@@ -117,11 +118,20 @@ def parse_timestamp(pub_date):
 
 # ===== HIER EINFÜGEN =====
 
-def clean_description(text):
+def clean_description(text, post):
     """Bereinigt den Tweettext und formatiert Quote-Posts."""
 
     if not text:
         return ""
+    # Repost erkennen (ohne eigenen Kommentar)
+    if post.get("is_repost"):
+
+        username = post["title"].split(":")[0].replace("RT by @", "").strip()
+
+        text = (
+            f"🔁 **Repost von @{username}**\n\n"
+            f"{text}"
+        )
 
     # Windows-Zeilenumbrüche vereinheitlichen
     text = text.replace("\r\n", "\n")
@@ -166,7 +176,10 @@ def create_embed(post, feed):
 
     embed = {
         "description": (
-            clean_description(post["description"])
+            clean_description(
+                post["description"],
+                post
+            )
             + f"\n\n🔗 [Beitrag ansehen]({post['link']})"
         ),
         "url": post["link"],
