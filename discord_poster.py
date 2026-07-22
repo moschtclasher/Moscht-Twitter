@@ -118,7 +118,7 @@ def parse_timestamp(pub_date):
 # ===== HIER EINFÜGEN =====
 
 def clean_description(text):
-    """Bereinigt den Tweettext."""
+    """Bereinigt den Tweettext und formatiert Quote-Posts."""
 
     if not text:
         return ""
@@ -126,72 +126,44 @@ def clean_description(text):
     # Windows-Zeilenumbrüche vereinheitlichen
     text = text.replace("\r\n", "\n")
 
-    # Nitter-, X- und Twitter-Links entfernen
+    # Quote-Post erkennen:
+    # Eigener Kommentar + Account (Name @Username) + zitierter Beitrag
+    match = re.search(
+        r"^(.*?)\n+(.+?) \(@([A-Za-z0-9_]+)\)\n+(.*)$",
+        text,
+        flags=re.DOTALL,
+    )
+
+    if match:
+        comment = match.group(1).strip()
+        name = match.group(2).strip()
+        username = match.group(3).strip()
+        quoted = match.group(4).strip()
+
+        text = (
+            f"{comment}\n\n"
+            "──────────────────\n\n"
+            f"🔁 **Repost von {name} (@{username})**\n\n"
+            f"{quoted}"
+        )
+
+    # Nitter-, X- und Twitter-Links am Ende entfernen
     text = re.sub(
-        r"https?://(?:nitter\.[^\s]+|x\.com|twitter\.com)/\S+",
+        r"\n*—?\s*https?://(?:nitter\.[^\s]+|x\.com|twitter\.com)/\S+",
         "",
         text,
         flags=re.IGNORECASE,
     )
 
-    # Mehr als zwei aufeinanderfolgende Zeilenumbrüche auf genau zwei reduzieren
+    # Mehr als zwei Zeilenumbrüche auf zwei reduzieren
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
-
-
-def format_repost(text):
-
-    """Erkennt Reposts und formatiert sie schöner."""
-
-    if not text:
-
-        return text
-
-    lines = text.splitlines()
-
-    if not lines:
-
-        return text
-
-    first_line = lines[0].strip()
-
-    # Muster: RNxHZN (@RNxHZN)
-
-    match = re.match(
-
-        r"^(.+?)\s+\(@([A-Za-z0-9_]+)\)$",
-
-        first_line,
-
-    )
-
-    if not match:
-
-        return text
-
-    name = match.group(1)
-
-    username = match.group(2)
-
-    remaining = "\n".join(lines[1:]).lstrip()
-
-    return (
-
-        f"🔁 **Repost von {name} (@{username})**\n\n"
-
-        f"{remaining}"
-
-    )
+    
 
 def create_embed(post, feed):
     """Erstellt ein Discord-Embed."""
 
-    print("\n==========================")
-    print("DESCRIPTION:")
-    print(repr(post["description"]))
-    print("==========================\n")
-    
     embed = {
         "description": (
             clean_description(post["description"])
