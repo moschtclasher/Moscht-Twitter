@@ -78,12 +78,22 @@ def read_feed(feed_file):
     posts = []
 
     for item in root.findall("./channel/item"):
-        enclosure = item.find("enclosure")
-
         image = ""
 
+        # Erstes Enclosure verwenden
+        enclosure = item.find("enclosure")
         if enclosure is not None:
             image = enclosure.attrib.get("url", "")
+
+        # Falls kein Enclosure existiert:
+        # erstes media:content verwenden
+        if not image:
+            media = item.find(
+                "{http://search.yahoo.com/mrss/}content"
+            )
+
+            if media is not None:
+                image = media.attrib.get("url", "")
 
         title = item.findtext("title", "") or ""
         link = item.findtext("link", "") or ""
