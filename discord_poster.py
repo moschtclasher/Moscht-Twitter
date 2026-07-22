@@ -82,16 +82,38 @@ def read_feed(feed_file):
             image = enclosure.attrib.get("url", "")
 
         title = item.findtext("title", "") or ""
+        link = item.findtext("link", "") or ""
+
+        # Repost erkennen
+        repost_match = re.match(
+            r"^RT by @([A-Za-z0-9_]+):",
+            title,
+            flags=re.IGNORECASE,
+        )
+
+        is_repost = repost_match is not None
+        reposted_by = repost_match.group(1) if repost_match else ""
+
+        # Tatsächlichen Autor aus dem X-Link auslesen
+        author_match = re.search(
+            r"https?://(?:www\.)?(?:x\.com|twitter\.com)/([A-Za-z0-9_]+)/status/",
+            link,
+            flags=re.IGNORECASE,
+        )
+
+        original_author = author_match.group(1) if author_match else ""
 
         posts.append(
             {
                 "guid": item.findtext("guid", "") or "",
                 "title": title,
                 "description": item.findtext("description", "") or "",
-                "link": item.findtext("link", "") or "",
+                "link": link,
                 "pubDate": item.findtext("pubDate", "") or "",
                 "image": image,
-                "is_repost": title.strip().lower().startswith("rt by @"),
+                "is_repost": is_repost,
+                "reposted_by": reposted_by,
+                "original_author": original_author,
             }
         )
 
@@ -132,21 +154,17 @@ def clean_description(text, post):
     # Repost (ohne eigenen Kommentar)
     # --------------------------------------------------
     if post.get("is_repost"):
+    username = post.get("original_author")
 
-        repost_match = re.match(
-            r"^RT by @([A-Za-z0-9_]+):",
-            post["title"],
-            flags=re.IGNORECASE,
+    # Fallback, falls der Autor nicht aus dem Link gelesen werden konnte
+    if not username:
+        username = post.get("reposted_by", "")
+
+    if username:
+        text = (
+            f"🔁 **Repost von @{username}**\n\n"
+            f"{text}"
         )
-
-        if repost_match:
-
-            username = repost_match.group(1)
-
-            text = (
-                f"🔁 **Repost von @{username}**\n\n"
-                f"{text}"
-            )
 
     # --------------------------------------------------
     # Quote-Post erkennen
