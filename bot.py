@@ -400,6 +400,11 @@ def create_own_feed(
             source_instance,
         )
 
+        if original_image_url:
+            print(f"Thumbnail/Bild gefunden: {original_image_url}")
+        else:
+            print(f"Kein Bild gefunden für Post {post_id}")
+            
         public_image_url = ""
         image_content_type = "image/jpeg"
 
