@@ -24,6 +24,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
+      - name: RSS-Dateien, Bilder und Status speichern
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add *.xml images/ last_posts.json
+          git diff --cached --quiet || git commit -m "Update RSS feed, images and Discord state"
+          git push
+      
+      - name: Auf GitHub Pages warten
+        run: |
+          echo "Warte 60 Sekunden auf die Veröffentlichung der Bilder ..."
+          sleep 60
+
       - name: Generate RSS feeds
         env:
           DISCORD_WEBHOOK_MOSCHT: ${{ secrets.DISCORD_WEBHOOK_MOSCHT }}
@@ -32,11 +45,3 @@ jobs:
           python bot.py
           python bot_confusion.py
           python discord_poster.py
-
-      - name: RSS-Dateien, Bilder und Status speichern
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add *.xml images/ last_posts.json
-          git diff --cached --quiet || git commit -m "Update RSS feed, images and Discord state"
-          git push
