@@ -5,7 +5,7 @@
     <link>https://x.com/Confusion_CoC</link>
     <description>Automatisch erzeugter RSS-Feed für @Confusion_CoC</description>
     <language>de</language>
-    <lastBuildDate>Wed, 05 Aug 2026 20:15:38 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 05 Aug 2026 20:31:07 +0000</lastBuildDate>
     <generator>GitHub Actions über https://nitter.net</generator>
     <item>
       <title>CNF Matchday ⚔️ Week 1 of the Triple Scoop Cup is here. 🆚 Team Elektros 🕖 19:05 UTC Watch us live and support the team! 💛🖤 🎥⬇️ http://twitch.tv/emigamer_sv?sr… #cocesport</title>
@@ -39,6 +39,33 @@ twitch.tv/emigamer_sv?sr…
       <pubDate>Wed, 05 Aug 2026 18:32:04 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2085071354441732196.jpg" type="image/jpeg" length="223838" />
       <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2085071354441732196.jpg" medium="image" type="image/jpeg" />
+    </item>
+    <item>
+      <title>R to @Confusion_CoC: Week 1 Recap ❌ CNF Esports 10-12 Team Elektros Not our day. The grind doesn’t stop. On to the next one. 💛🖤 GG to our opponents for the solid performance</title>
+      <description>Week 1 Recap
+
+
+
+❌ CNF Esports 10-12 Team Elektros
+
+
+
+Not our day.
+
+The grind doesn’t stop.
+
+
+
+On to the next one. 💛🖤
+
+
+
+GG to our opponents for the solid performance</description>
+      <link>https://x.com/Confusion_CoC/status/2085094930792223052</link>
+      <guid isPermaLink="false">2085094930792223052</guid>
+      <pubDate>Wed, 05 Aug 2026 20:05:45 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2085094930792223052.jpg" type="image/jpeg" length="274356" />
+      <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2085094930792223052.jpg" medium="image" type="image/jpeg" />
     </item>
     <item>
       <title>RT by @Confusion_CoC: 🚨 𝗥𝗢𝗦𝗧𝗘𝗥 𝗥𝗘𝗩𝗘𝗔𝗟 🚨 The Jai Nepal Esports family continues to grow. Introducing 𝗧𝗝𝗡 𝗘𝘀𝗽𝗼𝗿𝘁𝘀, our newest Clash of Clans division. ⚡ Akira ⚡ Bone ⚡ Mostht ⚡ N.I.C.O ⚡ Spitzel Different name. Same ambition. One organization. 🇳🇵 𝗥𝗶𝘀𝗲. 𝗨𝗻𝗶𝘁𝗲. 𝗖𝗼𝗻𝗾𝘂𝗲𝗿.</title>
@@ -321,23 +348,6 @@ ggs 🧨</description>
       <pubDate>Thu, 04 Jun 2026 21:37:22 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2062649940162068503.jpg" type="image/jpeg" length="166375" />
       <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2062649940162068503.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>🏟️ Krewe Carnival Cup vs bada bing booms ggs 🧨</title>
-      <description>🏟️ Krewe Carnival Cup
-
-
-
-vs bada bing booms 
-
-
-
-ggs 🧨</description>
-      <link>https://x.com/Confusion_CoC/status/2062649651375780062</link>
-      <guid isPermaLink="false">2062649651375780062</guid>
-      <pubDate>Thu, 04 Jun 2026 21:36:13 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2062649651375780062.jpg" type="image/jpeg" length="155979" />
-      <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2062649651375780062.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
