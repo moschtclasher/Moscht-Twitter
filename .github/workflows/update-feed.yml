@@ -53,6 +53,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_MOSCHT: ${{ secrets.DISCORD_WEBHOOK_MOSCHT }}
           DISCORD_WEBHOOK_CONFUSION: ${{ secrets.DISCORD_WEBHOOK_CONFUSION }}
+          DISCORD_WEBHOOK_LURMII: ${{ secrets.DISCORD_WEBHOOK_LURMII }}
         run: |
           python discord_poster.py
 
