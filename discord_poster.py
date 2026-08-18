@@ -117,6 +117,21 @@ def read_feed(feed_file):
 
         original_author = author_match.group(1) if author_match else ""
 
+        image_file = ""
+
+        if image:
+            image_name = Path(image).name
+
+            if feed_file == "feed.xml":
+                candidate = Path("images/moscht_coc") / image_name
+            elif feed_file == "feed-confusion.xml":
+                candidate = Path("images/confusion_coc") / image_name
+            else:
+                candidate = None
+
+            if candidate and candidate.exists():
+                image_file = str(candidate)
+        
         posts.append(
             {
                 "guid": item.findtext("guid", "") or "",
@@ -125,6 +140,7 @@ def read_feed(feed_file):
                 "link": link,
                 "pubDate": item.findtext("pubDate", "") or "",
                 "image": image,
+                "image_file": image_file,
                 "is_repost": is_repost,
                 "reposted_by": reposted_by,
                 "original_author": original_author,
@@ -237,7 +253,13 @@ def create_embed(post, feed):
         },
     }
 
-    if post["image"]:
+    if post.get("image_file"):
+        filename = Path(post["image_file"]).name
+    
+        embed["image"] = {
+            "url": f"attachment://{filename}"
+        }
+    elif post["image"]:
         embed["image"] = {
             "url": post["image"]
         }
@@ -258,11 +280,34 @@ def send_to_discord(post, feed):
     }
 
     try:
-        response = requests.post(
-            feed["webhook"],
-            json=payload,
-            timeout=30,
-        )
+        if post.get("image_file"):
+            image_path = Path(post["image_file"])
+        
+            with image_path.open("rb") as image_file:
+                files = {
+                    "files[0]": (
+                        image_path.name,
+                        image_file,
+                    )
+                }
+        
+                data = {
+                    "payload_json": json.dumps(payload)
+                }
+        
+                response = requests.post(
+                    feed["webhook"],
+                    data=data,
+                    files=files,
+                    timeout=30,
+                )
+        
+        else:
+            response = requests.post(
+                feed["webhook"],
+                json=payload,
+                timeout=30,
+            )
 
         if response.status_code == 204:
             print(f"✅ Gesendet: {post['guid']}")
