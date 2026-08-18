@@ -5,8 +5,21 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Tue, 18 Aug 2026 07:00:57 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 18 Aug 2026 08:00:56 +0000</lastBuildDate>
     <generator>GitHub Actions über https://nitter.net</generator>
+    <item>
+      <title>Which cake is missing?🎂 #ClashOfClans #Anniversary #cake #deco #coc</title>
+      <description>Which cake is missing?🎂
+
+
+
+#ClashOfClans #Anniversary #cake #deco #coc</description>
+      <link>https://x.com/moscht_coc/status/2089616438826795289</link>
+      <guid isPermaLink="false">2089616438826795289</guid>
+      <pubDate>Tue, 18 Aug 2026 07:32:36 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2089616438826795289.jpg" type="image/jpeg" length="112034" />
+      <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2089616438826795289.jpg" medium="image" type="image/jpeg" />
+    </item>
     <item>
       <title>The journey ends in round 5 of the lower bracket. I went 3/5, pretty solid, but not what I aimed for. Focus on our last chance in September 🎯@EsportsJn #ClashEsports #ClashOfClans #MonthlyQualifier #coc</title>
       <description>The journey ends in round 5 of the lower bracket.
@@ -248,21 +261,6 @@ More difficult than expected, but it was fun to compete against the best🤜🏾
       <pubDate>Thu, 30 Jul 2026 10:15:17 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2082772009088401521.jpg" type="image/jpeg" length="130189" />
       <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2082772009088401521.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Finally peace💆🏽‍♂️ btw no money spent on ores✨ #ClashOfClans #ores #equipment #coc</title>
-      <description>Finally peace💆🏽‍♂️
-
-btw no money spent on ores✨
-
-
-
-#ClashOfClans #ores #equipment #coc</description>
-      <link>https://x.com/moscht_coc/status/2082195009474838880</link>
-      <guid isPermaLink="false">2082195009474838880</guid>
-      <pubDate>Tue, 28 Jul 2026 20:02:30 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2082195009474838880.jpg" type="image/jpeg" length="161102" />
-      <media:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2082195009474838880.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
