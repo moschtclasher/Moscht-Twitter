@@ -38,6 +38,17 @@ FEEDS = [
         "mention": "<@&1506407793866047579>",
         "emoji": "<a:blitzcnf:1475376256970260582>",
     },
+    {
+        "feed_file": "feed-lurmii.xml",
+        "webhook": os.environ["DISCORD_WEBHOOK_LURMII"],
+        "display_name": "Lurmii Twitter/X",
+        "avatar_url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_avatar.png",
+        "footer": "𝕏 • @Twitch_Lurmii",
+        "history": 5,
+        "color": 0xFFF533,
+        "mention": "<@&1537072600948150352>",
+        "emoji": "<a:blitzcnf:1475376256970260582>",
+    },
 ]
 
 
