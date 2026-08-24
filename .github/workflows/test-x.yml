@@ -1,0 +1,28 @@
+name: Test X Zugriff
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-x:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: X Profil abrufen
+        run: |
+          echo "Teste Zugriff auf X..."
+
+          HTTP_CODE=$(curl -L \
+            -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36" \
+            -o x.html \
+            -s \
+            -w "%{http_code}" \
+            "https://x.com/Twitch_Lurmii")
+
+          echo "HTTP Status: $HTTP_CODE"
+
+          echo "Dateigröße:"
+          wc -c x.html
+
+          echo "Erste 20 Zeilen:"
+          head -c 2000 x.html
