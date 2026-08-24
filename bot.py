@@ -1,333 +1,395 @@
-import html
-import mimetypes
 import os
 import re
-import shutil
-import sys
-import urllib.error
-import urllib.request
-import xml.etree.ElementTree as ET
+import html
 from datetime import datetime, timezone
 from email.utils import format_datetime
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+import xml.etree.ElementTree as ET
+
+import requests
+
+
+# ==========================================================
+# Konfiguration
+# ==========================================================
 
 USERNAME = "moscht_coc"
-OUTPUT_FILE = "feed.xml"
-MAX_POSTS = 15
 
-# An deine GitHub-Daten angepasst
-GITHUB_USERNAME = "moschtclasher"
-GITHUB_REPOSITORY = "Moscht-Twitter"
+API_URL = "https://api.sorsa.io/v3/search-tweets"
+API_KEY = os.environ["SORSA_API_KEY"]
 
-PAGES_BASE_URL = (
-    f"https://{GITHUB_USERNAME}.github.io/{GITHUB_REPOSITORY}"
-)
+FEED_FILE = "feed.xml"
+IMAGE_DIR = Path("images/moscht_coc")
 
-IMAGES_DIRECTORY = Path("images/moscht_coc")
-
-NITTER_INSTANCES = [
-    "https://nitter.net",
-    "https://nitter.poast.org",
-    "https://nitter.privacydev.net",
-]
-
-USER_AGENT = (
-    "Mozilla/5.0 (compatible; MoschtRSSBot/1.0; "
-    f"+https://github.com/{GITHUB_USERNAME}/{GITHUB_REPOSITORY})"
-)
-
-MEDIA_NAMESPACE = "http://search.yahoo.com/mrss/"
-ET.register_namespace("media", MEDIA_NAMESPACE)
+PROFILE_URL = f"https://x.com/{USERNAME}"
 
 
-def create_request(url: str) -> urllib.request.Request:
-    return urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept": (
-                "application/rss+xml, application/xml, "
-                "text/xml, image/avif, image/webp, "
-                "image/apng, image/*, */*;q=0.8"
-            ),
-        },
-    )
+# ==========================================================
+# Sorsa
+# ==========================================================
 
+def get_tweets():
 
-def download_feed(instance: str) -> bytes:
-    url = f"{instance.rstrip('/')}/{USERNAME}/rss"
-
-    with urllib.request.urlopen(
-        create_request(url),
-        timeout=25,
-    ) as response:
-        if response.status != 200:
-            raise RuntimeError(f"HTTP {response.status}")
-
-        data = response.read()
-
-        if not data:
-            raise RuntimeError("Leere Antwort")
-
-        return data
-
-
-def find_working_feed() -> tuple[str, bytes]:
-    errors = []
-
-    for instance in NITTER_INSTANCES:
-        try:
-            print(f"Teste {instance} ...")
-            data = download_feed(instance)
-            root = ET.fromstring(data)
-
-            if root.tag.lower().endswith("html"):
-                raise RuntimeError("HTML statt RSS erhalten")
-
-            if not root.findall(".//item"):
-                raise RuntimeError("Keine RSS-Einträge gefunden")
-
-            print(f"Erfolgreich: {instance}")
-            return instance, data
-
-        except (
-            urllib.error.HTTPError,
-            urllib.error.URLError,
-            TimeoutError,
-            RuntimeError,
-            ET.ParseError,
-        ) as error:
-            message = f"{instance}: {error}"
-            errors.append(message)
-            print(f"Fehler: {message}")
-
-    raise RuntimeError(
-        "Keine Nitter-Instanz lieferte einen gültigen Feed:\n"
-        + "\n".join(errors)
-    )
-
-
-def text_content(element: ET.Element | None) -> str:
-    if element is None:
-        return ""
-
-    return "".join(element.itertext()).strip()
-
-
-def get_description_html(source_item: ET.Element) -> str:
-    element = source_item.find("description")
-
-    if element is None or element.text is None:
-        return ""
-
-    return element.text.strip()
-
-
-def strip_html(value: str) -> str:
-    value = re.sub(
-        r"<br\s*/?>",
-        "\n",
-        value,
-        flags=re.IGNORECASE,
-    )
-    value = re.sub(r"<[^>]+>", "", value)
-
-    return html.unescape(value).strip()
-
-
-def extract_image_url(
-    description_html: str,
-    source_instance: str,
-) -> str:
-    if not description_html:
-        return ""
-
-    match = re.search(
-        r'<img[^>]+src=["\']([^"\']+)["\']',
-        description_html,
-        flags=re.IGNORECASE,
-    )
-
-    # Vorschaubild eines Videos
-    if not match:
-        match = re.search(
-            r'<video[^>]+poster=["\']([^"\']+)["\']',
-            description_html,
-            flags=re.IGNORECASE,
-        )
-
-    if not match:
-        return ""
-
-    image_url = html.unescape(match.group(1)).strip()
-
-    return urljoin(
-        source_instance.rstrip("/") + "/",
-        image_url,
-    )
-
-
-def normalize_post_link(
-    link: str,
-    source_instance: str,
-) -> str:
-    if not link:
-        return f"https://x.com/{USERNAME}"
-
-    instance = source_instance.rstrip("/")
-
-    if link.startswith(instance):
-        link = "https://x.com" + link[len(instance):]
-
-    # Nitter hängt teilweise #m an
-    return link.removesuffix("#m")
-
-
-def safe_post_id(guid: str, link: str) -> str:
-    candidate = guid or link
-
-    status_match = re.search(
-        r"/status/(\d+)",
-        candidate,
-    )
-
-    if status_match:
-        return status_match.group(1)
-
-    cleaned = re.sub(
-        r"[^a-zA-Z0-9_-]",
-        "_",
-        candidate,
-    )
-
-    return cleaned[:100] or "unknown"
-
-
-def extension_from_response(
-    image_url: str,
-    content_type: str,
-) -> str:
-    normalized_type = content_type.split(";")[0].strip().lower()
-
-    known_extensions = {
-        "image/jpeg": ".jpg",
-        "image/jpg": ".jpg",
-        "image/png": ".png",
-        "image/gif": ".gif",
-        "image/webp": ".webp",
-        "image/avif": ".avif",
+    headers = {
+        "ApiKey": API_KEY,
+        "Content-Type": "application/json",
     }
 
-    if normalized_type in known_extensions:
-        return known_extensions[normalized_type]
+    data = {
+        "query": f"from:{USERNAME}",
+        "order": "latest",
+    }
 
-    guessed = mimetypes.guess_extension(normalized_type)
+    response = requests.post(
+        API_URL,
+        headers=headers,
+        json=data,
+        timeout=30,
+    )
 
-    if guessed:
-        return ".jpg" if guessed == ".jpe" else guessed
+    print("Sorsa HTTP:", response.status_code)
 
-    path_extension = Path(
-        urlparse(image_url).path
-    ).suffix.lower()
+    if response.status_code != 200:
+        print(response.text)
+        raise RuntimeError(
+            f"Sorsa API Fehler: HTTP {response.status_code}"
+        )
 
-    if path_extension in {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".webp",
-        ".avif",
-    }:
-        return ".jpg" if path_extension == ".jpeg" else path_extension
+    result = response.json()
 
-    return ".jpg"
+    tweets = result.get("tweets", [])
+
+    print(
+        f"{len(tweets)} Tweets von @{USERNAME} gefunden."
+    )
+
+    return tweets
 
 
-def download_image(
-    image_url: str,
-    post_id: str,
-) -> tuple[str, str] | None:
-    try:
-        with urllib.request.urlopen(
-            create_request(image_url),
-            timeout=30,
-        ) as response:
-            if response.status != 200:
-                raise RuntimeError(f"HTTP {response.status}")
+# ==========================================================
+# Hilfsfunktionen
+# ==========================================================
 
-            content_type = response.headers.get(
-                "Content-Type",
-                "image/jpeg",
+def get_tweet_id(tweet):
+
+    return str(
+        tweet.get("id")
+        or tweet.get("rest_id")
+        or ""
+    )
+
+
+def get_text(tweet):
+
+    return (
+        tweet.get("full_text")
+        or tweet.get("text")
+        or ""
+    ).strip()
+
+
+def get_created_at(tweet):
+
+    return (
+        tweet.get("created_at")
+        or tweet.get("createdAt")
+        or ""
+    )
+
+
+def parse_date(value):
+
+    if not value:
+        return datetime.now(timezone.utc)
+
+    formats = [
+        "%a %b %d %H:%M:%S %z %Y",
+        "%Y-%m-%dT%H:%M:%S.%fZ",
+        "%Y-%m-%dT%H:%M:%SZ",
+    ]
+
+    for fmt in formats:
+
+        try:
+
+            dt = datetime.strptime(
+                value,
+                fmt,
             )
 
-            if not content_type.lower().startswith("image/"):
-                raise RuntimeError(
-                    f"Kein Bild erhalten: {content_type}"
+            if dt.tzinfo is None:
+                dt = dt.replace(
+                    tzinfo=timezone.utc
                 )
 
-            data = response.read()
+            return dt.astimezone(
+                timezone.utc
+            )
 
-            if not data:
-                raise RuntimeError("Leere Bilddatei")
+        except ValueError:
+            pass
 
-        extension = extension_from_response(
-            image_url,
-            content_type,
-        )
+    print(
+        f"⚠️ Datum konnte nicht gelesen werden: {value}"
+    )
 
-        filename = f"{post_id}{extension}"
-        output_path = IMAGES_DIRECTORY / filename
-        output_path.write_bytes(data)
-
-        public_url = (
-            f"{PAGES_BASE_URL}/{output_path.as_posix()}"
-        )
-
-        print(
-            f"Bild gespeichert: {output_path} "
-            f"({len(data)} Bytes)"
-        )
-
-        return public_url, content_type.split(";")[0]
-
-    except (
-        urllib.error.HTTPError,
-        urllib.error.URLError,
-        TimeoutError,
-        RuntimeError,
-        OSError,
-    ) as error:
-        print(
-            f"Bild konnte nicht geladen werden: "
-            f"{image_url}: {error}"
-        )
-        return None
+    return datetime.now(timezone.utc)
 
 
-def prepare_images_directory() -> None:
-    # Der Ordner wird bei jedem Lauf neu aufgebaut.
-    # Dadurch sammeln sich nicht unbegrenzt alte Bilder an.
-    if IMAGES_DIRECTORY.exists():
-        shutil.rmtree(IMAGES_DIRECTORY)
+# ==========================================================
+# Bilder
+# ==========================================================
 
-    IMAGES_DIRECTORY.mkdir(
+def extract_image_urls(tweet, text):
+
+    urls = []
+
+    media = tweet.get("media")
+
+    if isinstance(media, list):
+
+        for item in media:
+
+            if not isinstance(item, dict):
+                continue
+
+            media_url = (
+                item.get("media_url_https")
+                or item.get("media_url")
+                or item.get("url")
+            )
+
+            if media_url:
+                urls.append(media_url)
+
+    text_urls = re.findall(
+        r"https?://pbs\.twimg\.com/media/[^\s]+",
+        text,
+    )
+
+    urls.extend(text_urls)
+
+    result = []
+
+    for url in urls:
+
+        url = html.unescape(url)
+        url = url.rstrip(".,!?)]}")
+
+        if url not in result:
+            result.append(url)
+
+    return result
+
+
+def download_image(url, tweet_id, index):
+
+    IMAGE_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
 
+    clean_url = url.split("?")[0]
+    extension = Path(clean_url).suffix.lower()
 
-def create_own_feed(
-    source_instance: str,
-    source_data: bytes,
-) -> None:
-    source_root = ET.fromstring(source_data)
-    source_items = source_root.findall(".//item")[:MAX_POSTS]
+    if extension not in [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    ]:
+        extension = ".jpg"
 
-    prepare_images_directory()
+    filename = (
+        f"{tweet_id}.jpg"
+        if index == 0
+        else f"{tweet_id}_{index}{extension}"
+    )
 
-    rss = ET.Element("rss", version="2.0")
-    channel = ET.SubElement(rss, "channel")
+    target = IMAGE_DIR / filename
+
+    try:
+
+        response = requests.get(
+            url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 "
+                    "(X11; Linux x86_64) "
+                    "AppleWebKit/537.36 "
+                    "Chrome/131 Safari/537.36"
+                )
+            },
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+        target.write_bytes(
+            response.content
+        )
+
+        print(
+            f"✅ Bild gespeichert: {target} "
+            f"({len(response.content)} Bytes)"
+        )
+
+        return target
+
+    except requests.RequestException as e:
+
+        print(
+            f"❌ Bild konnte nicht geladen werden: {url}"
+        )
+
+        print(e)
+
+        return None
+
+
+# ==========================================================
+# RSS
+# ==========================================================
+
+def create_rss_item(channel, tweet):
+
+    tweet_id = get_tweet_id(tweet)
+    text = get_text(tweet)
+
+    created_at = parse_date(
+        get_created_at(tweet)
+    )
+
+    tweet_url = (
+        f"https://x.com/{USERNAME}/status/{tweet_id}"
+    )
+
+    image_urls = extract_image_urls(
+        tweet,
+        text,
+    )
+
+    downloaded_images = []
+
+    for index, image_url in enumerate(image_urls):
+
+        image = download_image(
+            image_url,
+            tweet_id,
+            index,
+        )
+
+        if image:
+            downloaded_images.append(image)
+
+    item = ET.SubElement(
+        channel,
+        "item",
+    )
+
+    title = ET.SubElement(
+        item,
+        "title",
+    )
+
+    title.text = re.sub(
+        r"\s+",
+        " ",
+        text,
+    ).strip()[:300]
+
+    description = ET.SubElement(
+        item,
+        "description",
+    )
+
+    description.text = text
+
+    link = ET.SubElement(
+        item,
+        "link",
+    )
+
+    link.text = tweet_url
+
+    guid = ET.SubElement(
+        item,
+        "guid",
+        {
+            "isPermaLink": "false"
+        },
+    )
+
+    guid.text = tweet_id
+
+    pub_date = ET.SubElement(
+        item,
+        "pubDate",
+    )
+
+    pub_date.text = format_datetime(
+        created_at,
+        usegmt=True,
+    )
+
+    for image in downloaded_images:
+
+        public_url = (
+            "https://moschtclasher.github.io/"
+            "Moscht-Twitter/"
+            "images/moscht_coc/"
+            f"{image.name}"
+        )
+
+        mime_type = (
+            "image/png"
+            if image.suffix.lower() == ".png"
+            else "image/jpeg"
+        )
+
+        ET.SubElement(
+            item,
+            "enclosure",
+            {
+                "url": public_url,
+                "type": mime_type,
+                "length": str(
+                    image.stat().st_size
+                ),
+            },
+        )
+
+        ET.SubElement(
+            item,
+            "{http://search.yahoo.com/mrss/}"
+            "content",
+            {
+                "url": public_url,
+                "medium": "image",
+                "type": mime_type,
+            },
+        )
+
+
+# ==========================================================
+# Feed erstellen
+# ==========================================================
+
+def create_feed(tweets):
+
+    rss = ET.Element(
+        "rss",
+        {
+            "version": "2.0",
+            "xmlns:media":
+                "http://search.yahoo.com/mrss/",
+        },
+    )
+
+    channel = ET.SubElement(
+        rss,
+        "channel",
+    )
 
     ET.SubElement(
         channel,
@@ -337,194 +399,84 @@ def create_own_feed(
     ET.SubElement(
         channel,
         "link",
-    ).text = f"https://x.com/{USERNAME}"
+    ).text = PROFILE_URL
 
     ET.SubElement(
         channel,
         "description",
     ).text = (
-        f"Automatisch erzeugter RSS-Feed für @{USERNAME}"
+        f"Automatisch erzeugter RSS-Feed "
+        f"für @{USERNAME}"
     )
 
-    ET.SubElement(channel, "language").text = "de"
+    ET.SubElement(
+        channel,
+        "language",
+    ).text = "de"
 
     ET.SubElement(
         channel,
         "lastBuildDate",
     ).text = format_datetime(
-        datetime.now(timezone.utc)
+        datetime.now(timezone.utc),
+        usegmt=True,
     )
 
     ET.SubElement(
         channel,
         "generator",
-    ).text = (
-        f"GitHub Actions über {source_instance}"
-    )
+    ).text = "GitHub Actions über Sorsa API"
 
-    image_count = 0
+    for tweet in tweets:
 
-    for source_item in source_items:
-        title = text_content(
-            source_item.find("title")
+        if not get_tweet_id(tweet):
+            continue
+
+        create_rss_item(
+            channel,
+            tweet,
         )
-
-        description_html = get_description_html(
-            source_item
-        )
-        description_text = strip_html(
-            description_html
-        )
-
-        original_link = text_content(
-            source_item.find("link")
-        )
-        link = normalize_post_link(
-            original_link,
-            source_instance,
-        )
-
-        guid = (
-            text_content(source_item.find("guid"))
-            or link
-        )
-
-        pub_date = text_content(
-            source_item.find("pubDate")
-        )
-
-        post_id = safe_post_id(guid, link)
-
-        original_image_url = extract_image_url(
-            description_html,
-            source_instance,
-        )
-
-        if original_image_url:
-            print(f"Thumbnail/Bild gefunden: {original_image_url}")
-        else:
-            print(f"Kein Bild gefunden für Post {post_id}")
-            
-        public_image_url = ""
-        image_content_type = "image/jpeg"
-
-        if original_image_url:
-            downloaded = download_image(
-                original_image_url,
-                post_id,
-            )
-
-            if downloaded:
-                public_image_url = downloaded[0]
-                image_content_type = downloaded[1]
-                image_count += 1
-
-        item = ET.SubElement(channel, "item")
-
-        ET.SubElement(
-            item,
-            "title",
-        ).text = html.unescape(
-            title or f"Neuer Post von @{USERNAME}"
-        )
-
-        ET.SubElement(
-            item,
-            "description",
-        ).text = description_text
-
-        ET.SubElement(item, "link").text = link
-
-        guid_element = ET.SubElement(
-            item,
-            "guid",
-        )
-        guid_element.set(
-            "isPermaLink",
-            "false",
-        )
-        guid_element.text = guid
-
-        if pub_date:
-            ET.SubElement(
-                item,
-                "pubDate",
-            ).text = pub_date
-
-        if public_image_url:
-            image_path = IMAGES_DIRECTORY / Path(public_image_url).name
-            image_size = image_path.stat().st_size
-
-            enclosure = ET.SubElement(
-                item,
-                "enclosure",
-            )
-            enclosure.set(
-                "url",
-                public_image_url,
-            )
-            enclosure.set(
-                "type",
-                image_content_type,
-            )
-            enclosure.set(
-                "length",
-                str(image_size),
-            )
-
-            media_content = ET.SubElement(
-                item,
-                f"{{{MEDIA_NAMESPACE}}}content",
-            )
-            media_content.set(
-                "url",
-                public_image_url,
-            )
-            media_content.set(
-                "medium",
-                "image",
-            )
-            media_content.set(
-                "type",
-                image_content_type,
-            )
-
-    ET.indent(rss, space="  ")
 
     tree = ET.ElementTree(rss)
+
+    ET.indent(
+        tree,
+        space="  ",
+    )
+
     tree.write(
-        OUTPUT_FILE,
+        FEED_FILE,
         encoding="utf-8",
         xml_declaration=True,
     )
 
     print(
-        f"{OUTPUT_FILE} mit {len(source_items)} Beiträgen "
-        f"und {image_count} lokal gespeicherten Bildern erstellt."
+        f"✅ Feed gespeichert: {FEED_FILE}"
     )
 
 
-def main() -> None:
-    try:
-        instance, source_data = find_working_feed()
-        create_own_feed(
-            instance,
-            source_data,
-        )
+# ==========================================================
+# Main
+# ==========================================================
 
-    except Exception as error:
-        print(
-            f"Abruf fehlgeschlagen: {error}",
-            file=sys.stderr,
-        )
+def main():
 
-        if os.path.exists(OUTPUT_FILE):
-            print(
-                "Bestehende feed.xml bleibt unverändert."
-            )
-            return
+    print("=" * 60)
+    print(
+        f"Sorsa X Feed für @{USERNAME}"
+    )
+    print("=" * 60)
 
-        sys.exit(1)
+    tweets = get_tweets()
+
+    if not tweets:
+        print("⚠️ Keine Tweets gefunden.")
+        return
+
+    create_feed(tweets)
+
+    print("")
+    print("✅ Fertig.")
 
 
 if __name__ == "__main__":
