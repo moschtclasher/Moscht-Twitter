@@ -1,130 +1,62 @@
-name: Test X Zugriff
+name: Test X API
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-x:
+  test-sorsa:
     runs-on: ubuntu-latest
 
     steps:
-      - name: X Profil abrufen
+      - name: Sorsa API testen
+        env:
+          SORSA_API_KEY: ${{ secrets.SORSA_API_KEY }}
         run: |
-          echo "Teste Zugriff auf X..."
-
-          HTTP_CODE=$(curl -L \
-            -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36" \
-            -o x.html \
-            -s \
-            -w "%{http_code}" \
-            "https://x.com/Twitch_Lurmii")
-
-          echo "HTTP Status: $HTTP_CODE"
-
-          echo "Dateigröße:"
-          wc -c x.html
-
-          echo "Erste 20 Zeilen:"
-          head -c 2000 x.html
-
-      - name: Nach Posts und Tweet-Daten suchen
-        run: |
-          echo "Suche nach Tweet-Daten..."
-
-          echo ""
-          echo "Anzahl Status-IDs:"
-          grep -oE '"rest_id":"[0-9]+"' x.html | sort -u | head -20
-
-          echo ""
-          echo "Suche nach Twitch_Lurmii:"
-          grep -oE '.{0,100}Twitch_Lurmii.{0,200}' x.html | head -10
-
-      - name: X Timeline API testen
-        run: |
-          echo "Teste X Timeline API..."
-
           python - <<'PY'
+          import os
           import requests
-          import re
-          import json
 
-          session = requests.Session()
+          api_key = os.environ["SORSA_API_KEY"]
+
+          url = "https://api.sorsa.io/v3/search-tweets"
 
           headers = {
-              "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-              "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-              "x-twitter-active-user": "yes",
-              "x-twitter-client-language": "en",
+              "ApiKey": api_key,
+              "Content-Type": "application/json",
           }
 
-          # Erst die Profilseite abrufen.
-          response = session.get(
-              "https://x.com/Twitch_Lurmii",
-              headers=headers,
-              timeout=30
-          )
-
-          print("Profil HTTP:", response.status_code)
-
-          # User-ID aus der gelieferten HTML-Seite suchen.
-          match = re.search(
-              r'"rest_id":"(\d+)"',
-              response.text
-          )
-
-          if not match:
-              match = re.search(
-                  r'"id_str":"(\d+)"',
-                  response.text
-              )
-
-          if not match:
-              print("❌ Keine User-ID im HTML gefunden.")
-              raise SystemExit(1)
-
-          user_id = match.group(1)
-
-          print("User-ID:", user_id)
-
-          # Aktuelle UserTweets-Query-ID.
-          query_id = "hr4gzZONlq23okjU8fIe_A"
-
-          variables = {
-              "userId": user_id,
-              "count": 20,
-              "includePromotedContent": True,
-              "withQuickPromoteEligibilityTweetFields": True,
-              "withSuperFollowsUserFields": True,
-              "withDownvotePerspective": False,
-              "withReactionsMetadata": False,
-              "withReactionsPerspective": False,
-              "withSuperFollowsTweetFields": True,
-              "withVoice": True,
-              "withV2Timeline": True
+          data = {
+              "query": "from:Twitch_Lurmii",
+              "order": "latest",
           }
 
-          url = (
-              f"https://x.com/i/api/graphql/"
-              f"{query_id}/UserTweets"
-          )
-
-          api_response = session.get(
+          response = requests.post(
               url,
               headers=headers,
-              params={
-                  "variables": json.dumps(variables),
-                  "features": json.dumps({})
-              },
-              timeout=30
+              json=data,
+              timeout=30,
           )
 
-          print("Timeline HTTP:", api_response.status_code)
-          print("Antwortgröße:", len(api_response.text))
+          print("HTTP Status:", response.status_code)
+          print("Antwortgröße:", len(response.text))
+
+          if response.status_code != 200:
+              print(response.text)
+              raise SystemExit(1)
+
+          result = response.json()
+
+          tweets = result.get("tweets", [])
 
           print("")
-          print("Erste 2000 Zeichen:")
-          print(api_response.text[:2000])
+          print("Anzahl Tweets:", len(tweets))
+          print("")
 
-          if api_response.status_code != 200:
-              raise SystemExit(1)
+          for tweet in tweets[:5]:
+              print("=" * 60)
+              print("ID:", tweet.get("id"))
+              print("Datum:", tweet.get("created_at"))
+              print("Autor:", tweet.get("user", {}).get("username"))
+              print("Text:", tweet.get("full_text"))
+              print("Medien:", tweet.get("media"))
           PY
