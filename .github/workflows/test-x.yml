@@ -38,3 +38,93 @@ jobs:
           echo ""
           echo "Suche nach Twitch_Lurmii:"
           grep -oE '.{0,100}Twitch_Lurmii.{0,200}' x.html | head -10
+
+      - name: X Timeline API testen
+        run: |
+          echo "Teste X Timeline API..."
+
+          python - <<'PY'
+          import requests
+          import re
+          import json
+
+          session = requests.Session()
+
+          headers = {
+              "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+              "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+              "x-twitter-active-user": "yes",
+              "x-twitter-client-language": "en",
+          }
+
+          # Erst die Profilseite abrufen.
+          response = session.get(
+              "https://x.com/Twitch_Lurmii",
+              headers=headers,
+              timeout=30
+          )
+
+          print("Profil HTTP:", response.status_code)
+
+          # User-ID aus der gelieferten HTML-Seite suchen.
+          match = re.search(
+              r'"rest_id":"(\d+)"',
+              response.text
+          )
+
+          if not match:
+              match = re.search(
+                  r'"id_str":"(\d+)"',
+                  response.text
+              )
+
+          if not match:
+              print("❌ Keine User-ID im HTML gefunden.")
+              raise SystemExit(1)
+
+          user_id = match.group(1)
+
+          print("User-ID:", user_id)
+
+          # Aktuelle UserTweets-Query-ID.
+          query_id = "hr4gzZONlq23okjU8fIe_A"
+
+          variables = {
+              "userId": user_id,
+              "count": 20,
+              "includePromotedContent": True,
+              "withQuickPromoteEligibilityTweetFields": True,
+              "withSuperFollowsUserFields": True,
+              "withDownvotePerspective": False,
+              "withReactionsMetadata": False,
+              "withReactionsPerspective": False,
+              "withSuperFollowsTweetFields": True,
+              "withVoice": True,
+              "withV2Timeline": True
+          }
+
+          url = (
+              f"https://x.com/i/api/graphql/"
+              f"{query_id}/UserTweets"
+          )
+
+          api_response = session.get(
+              url,
+              headers=headers,
+              params={
+                  "variables": json.dumps(variables),
+                  "features": json.dumps({})
+              },
+              timeout=30
+          )
+
+          print("Timeline HTTP:", api_response.status_code)
+          print("Antwortgröße:", len(api_response.text))
+
+          print("")
+          print("Erste 2000 Zeichen:")
+          print(api_response.text[:2000])
+
+          if api_response.status_code != 200:
+              raise SystemExit(1)
+          PY
