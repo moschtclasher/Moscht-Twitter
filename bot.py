@@ -64,16 +64,33 @@ def get_feed():
             
             print("HTTP Status:", response.status)
             print("Antwortgröße:", len(data))
-            print("Content-Type:", response.headers.get("Content-Type"))
-            
-            print("Erste 1000 Zeichen:")
-            print(data[:1000].decode("utf-8", errors="replace"))
-
             print(
-                f"✅ Nitter funktioniert: "
+                "Content-Type:",
+                response.headers.get("Content-Type")
+            )
+            
+            if not data.strip():
+            
+                raise RuntimeError(
+                    "Nitter lieferte eine leere Antwort."
+                )
+            
+            # Prüfen, ob tatsächlich XML geliefert wurde
+            try:
+            
+                ET.fromstring(data)
+            
+            except ET.ParseError as e:
+            
+                raise RuntimeError(
+                    f"Nitter lieferte kein gültiges XML: {e}"
+                )
+            
+            print(
+                f"✅ Gültiger Nitter-RSS-Feed: "
                 f"{instance}"
             )
-
+            
             return data
 
         except Exception as e:
