@@ -26,3 +26,15 @@ jobs:
 
           echo "Erste 20 Zeilen:"
           head -c 2000 x.html
+
+      - name: Nach Posts und Tweet-Daten suchen
+        run: |
+          echo "Suche nach Tweet-Daten..."
+
+          echo ""
+          echo "Anzahl Status-IDs:"
+          grep -oE '"rest_id":"[0-9]+"' x.html | sort -u | head -20
+
+          echo ""
+          echo "Suche nach Twitch_Lurmii:"
+          grep -oE '.{0,100}Twitch_Lurmii.{0,200}' x.html | head -10
