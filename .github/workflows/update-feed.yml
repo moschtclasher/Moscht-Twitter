@@ -28,6 +28,8 @@ jobs:
         env:
           SORSA_API_KEY: ${{ secrets.SORSA_API_KEY }}
         run: |
+          python bot.py
+          python bot_confusion.py
           python bot_lurmii.py
 
       - name: RSS-Dateien und Bilder speichern
