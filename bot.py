@@ -59,8 +59,15 @@ def get_feed():
                 request,
                 timeout=30,
             ) as response:
-
+            
                 data = response.read()
+            
+            print("HTTP Status:", response.status)
+            print("Antwortgröße:", len(data))
+            print("Content-Type:", response.headers.get("Content-Type"))
+            
+            print("Erste 1000 Zeichen:")
+            print(data[:1000].decode("utf-8", errors="replace"))
 
             print(
                 f"✅ Nitter funktioniert: "
