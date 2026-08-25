@@ -105,118 +105,7 @@ def extract_tweet_ids(profile_html):
 # Tweet-Typ erkennen
 # ==========================================================
 
-def detect_profile_tweet_type(profile_html, tweet_id):
 
-    """
-    Erkennt anhand der Profilseite, ob ein Tweet von USERNAME
-    ein Original, ein Repost oder ein Quote-Post ist.
-
-    Wichtig:
-    Die einzelne Tweet-Seite liefert bei X häufig keine
-    brauchbare Repost-Struktur. Deshalb wird hier die
-    Profilseite ausgewertet.
-    """
-
-    # ------------------------------------------------------
-    # Bereich um die Tweet-ID suchen
-    # ------------------------------------------------------
-
-    pattern = (
-        rf"/{re.escape(USERNAME)}/status/{re.escape(tweet_id)}"
-    )
-
-    matches = list(
-        re.finditer(
-            pattern,
-            profile_html,
-            flags=re.IGNORECASE,
-        )
-    )
-
-    if not matches:
-        print(
-            f"Profil-Typ {tweet_id}: "
-            f"keine Position gefunden"
-        )
-
-        return "original"
-
-    # Wir untersuchen alle Vorkommen.
-    # Das erste passende Vorkommen ist normalerweise
-    # der relevante Tweet-Eintrag.
-    for match in matches:
-
-        start = max(
-            0,
-            match.start() - 5000,
-        )
-
-        end = min(
-            len(profile_html),
-            match.end() + 5000,
-        )
-
-        context = profile_html[start:end]
-
-        # --------------------------------------------------
-        # Quote erkennen
-        # --------------------------------------------------
-
-        quote_patterns = [
-            r'"quoted_status"',
-            r'"quoted_status_result"',
-            r'"quoted_tweet"',
-            r'"is_quote_status"\s*:\s*true',
-        ]
-
-        for pattern in quote_patterns:
-
-            if re.search(
-                pattern,
-                context,
-                flags=re.IGNORECASE,
-            ):
-
-                print(
-                    f"Profil-Typ {tweet_id}: quote"
-                )
-
-                return "quote"
-
-        # --------------------------------------------------
-        # Repost erkennen
-        # --------------------------------------------------
-
-        repost_patterns = [
-            r'"retweeted_status"',
-            r'"retweeted_status_result"',
-            r'"retweeted"',
-            r'"repost"',
-        ]
-
-        for pattern in repost_patterns:
-
-            if re.search(
-                pattern,
-                context,
-                flags=re.IGNORECASE,
-            ):
-
-                print(
-                    f"Profil-Typ {tweet_id}: repost"
-                )
-
-                return "repost"
-
-    # ------------------------------------------------------
-    # Kein Hinweis
-    # ------------------------------------------------------
-
-    print(
-        f"Profil-Typ {tweet_id}: original"
-    )
-
-    return "original"
 
 def detect_tweet_type(tweet_html, tweet_id):
 
@@ -1033,7 +922,6 @@ def main():
     print("")
     print("========== STRUKTURIERTER REPOST DEBUG ==========")
     
-    # Alle Vorkommen von "retweeted_status" untersuchen
     matches = list(
         re.finditer(
             r"retweeted_status",
@@ -1048,40 +936,112 @@ def main():
     
     for index, match in enumerate(matches, start=1):
     
-        start = max(0, match.start() - 300)
-        end = min(
-            len(profile_html),
-            match.end() + 1500,
-        )
+        # --------------------------------------------------
+        # NUR bis zur nächsten retweeted_status-Struktur
+        # --------------------------------------------------
     
-        context = profile_html[start:end]
+        start = match.start()
     
-        # Tweet-IDs aus diesem Strukturblock holen
-        context_ids = re.findall(
-            r"\b\d{15,25}\b",
-            context,
-        )
+        if index < len(matches):
+            end = matches[index].start()
+        else:
+            end = len(profile_html)
     
-        context_ids = list(
-            dict.fromkeys(context_ids)
-        )
+        block = profile_html[start:end]
     
         print("")
         print(
-            f"--- retweeted_status #{index} ---"
+            f"--- retweeted_status BLOCK #{index} ---"
         )
     
         print(
-            "Gefundene IDs:",
-            context_ids,
+            "Blockgröße:",
+            len(block),
         )
     
-        # Nur die ersten relevanten IDs ausgeben
-        for value in context_ids[:10]:
+        # --------------------------------------------------
+        # Alle bekannten Tweet-IDs in diesem Block
+        # --------------------------------------------------
+    
+        found_ids = []
+    
+        for tweet_id in tweet_ids:
+    
+            if tweet_id in block:
+    
+                found_ids.append(
+                    tweet_id
+                )
+    
+        print(
+            "Bekannte Tweet-IDs:",
+            found_ids,
+        )
+    
+        # --------------------------------------------------
+        # Alle 15-25-stelligen IDs
+        # --------------------------------------------------
+    
+        all_ids = re.findall(
+            r"\b\d{15,25}\b",
+            block,
+        )
+    
+        all_ids = list(
+            dict.fromkeys(all_ids)
+        )
+    
+        print(
+            "Alle IDs im Block:"
+        )
+    
+        for value in all_ids[:30]:
+    
+            marker = ""
+    
+            if value in tweet_ids:
+                marker = " <-- PROFIL-TWEET"
+    
             print(
-                "  ID:",
+                " ",
                 value,
+                marker,
             )
+    
+        # --------------------------------------------------
+        # Interessante Strukturbegriffe
+        # --------------------------------------------------
+    
+        structure_terms = [
+            "quoted_status",
+            "quoted_status_result",
+            "quoted_tweet",
+            "is_quote_status",
+            "retweeted_status",
+            "retweeted_status_result",
+            "rest_id",
+            "legacy",
+            "full_text",
+            "screen_name",
+            "user_results",
+        ]
+    
+        print(
+            "Struktur-Hinweise:"
+        )
+    
+        lower_block = block.lower()
+    
+        for term in structure_terms:
+    
+            count = lower_block.count(
+                term.lower()
+            )
+    
+            if count:
+                print(
+                    f"  {term}: {count}"
+                )
     
     print("")
     print("========== END STRUKTURIERTER REPOST DEBUG ==========")
