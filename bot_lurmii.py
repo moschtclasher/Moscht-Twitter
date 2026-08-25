@@ -1,5 +1,6 @@
 import re
 import html
+import hashlib
 import requests
 import xml.etree.ElementTree as ET
 
@@ -288,6 +289,7 @@ def download_image(
     image_url,
     tweet_id,
     index,
+    seen_hashes=None,
 ):
 
     IMAGE_DIR.mkdir(
@@ -330,6 +332,23 @@ def download_image(
         )
 
         response.raise_for_status()
+
+        # X kann dasselbe Bild mehrfach unter unterschiedlichen
+        # URLs/Formaten liefern. Deshalb zusätzlich den tatsächlichen
+        # Dateiinhalt prüfen.
+        content_hash = hashlib.sha256(
+            response.content
+        ).hexdigest()
+
+        if seen_hashes is not None:
+            if content_hash in seen_hashes:
+                print(
+                    "ℹ️ Doppeltes Bild erkannt, überspringe:"
+                )
+                print(image_url)
+                return None
+
+            seen_hashes.add(content_hash)
 
         target.write_bytes(
             response.content
@@ -427,6 +446,8 @@ def create_rss_item(
     # Bilder
     # ------------------------------------------------------
 
+    seen_image_hashes = set()
+
     for index, image_url in enumerate(
         tweet["images"]
     ):
@@ -435,6 +456,7 @@ def create_rss_item(
             image_url,
             tweet_id,
             index,
+            seen_hashes=seen_image_hashes,
         )
 
         if image is None:
