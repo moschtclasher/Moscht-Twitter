@@ -102,81 +102,251 @@ def extract_tweet_ids(profile_html):
     return ids
 
 # ==========================================================
+# Tweet-Typen aus Profil-HTML bestimmen
+# ==========================================================
+
+def detect_profile_tweet_types(profile_html, tweet_ids):
+    """
+    Versucht, die Tweet-Typen anhand der X-Strukturen
+    im Profil-HTML zu bestimmen.
+
+    Wichtig:
+    Ein Treffer von 'retweeted_status' irgendwo im
+    Profil-HTML wird NICHT automatisch einem Tweet
+    zugeordnet.
+
+    Deshalb wird nur dann ein Typ gesetzt, wenn eine
+    Tweet-ID in einem ausreichend kleinen JSON-Kontext
+    zusammen mit eindeutigen Quote-/Retweet-Strukturen
+    gefunden wird.
+    """
+
+    result = {
+        tweet_id: "original"
+        for tweet_id in tweet_ids
+    }
+
+    print("")
+    print("========== PROFIL TWEET TYPEN ==========")
+
+    # ------------------------------------------------------
+    # Für jeden bekannten Profil-Tweet suchen wir seinen
+    # direkten Kontext im HTML.
+    # ------------------------------------------------------
+
+    for tweet_id in tweet_ids:
+
+        positions = [
+            match.start()
+            for match in re.finditer(
+                re.escape(tweet_id),
+                profile_html,
+            )
+        ]
+
+        detected = "original"
+
+        for position in positions:
+
+            # Nicht den gesamten Profil-HTML-Bereich nehmen.
+            # Ein kleiner Kontext verhindert möglichst,
+            # dass benachbarte Tweets vermischt werden.
+            start = max(
+                0,
+                position - 5000,
+            )
+
+            end = min(
+                len(profile_html),
+                position + 5000,
+            )
+
+            context = profile_html[
+                start:end
+            ]
+
+            # --------------------------------------------------
+            # Quote
+            # --------------------------------------------------
+
+            quote_patterns = [
+                r'"quoted_tweet"\s*:',
+                r'"quoted_tweet_result"\s*:',
+                r'"quoted_status"\s*:',
+                r'"quoted_status_result"\s*:',
+                r'"is_quote_status"\s*:\s*true',
+            ]
+
+            if any(
+                re.search(
+                    pattern,
+                    context,
+                    flags=re.IGNORECASE,
+                )
+                for pattern in quote_patterns
+            ):
+
+                detected = "quote"
+                break
+
+            # --------------------------------------------------
+            # Repost
+            # --------------------------------------------------
+
+            repost_patterns = [
+                r'"retweeted_status"\s*:',
+                r'"retweeted_status_result"\s*:',
+                r'"retweeted_status_id_str"\s*:',
+                r'"retweeted_status_id"\s*:',
+            ]
+
+            if any(
+                re.search(
+                    pattern,
+                    context,
+                    flags=re.IGNORECASE,
+                )
+                for pattern in repost_patterns
+            ):
+
+                detected = "repost"
+                break
+
+        result[tweet_id] = detected
+
+        print(
+            f"Profil-Typ {tweet_id}: {detected}"
+        )
+
+    print(
+        "========== END PROFIL TWEET TYPEN =========="
+    )
+
+    return result
+
+# ==========================================================
 # Tweet-Typ erkennen
 # ==========================================================
 
-
-
 def detect_tweet_type(tweet_html, tweet_id):
-
     """
-    Untersucht die HTML-Seite eines einzelnen Tweets.
+    Erkennt den Tweet-Typ anhand eindeutig vorhandener
+    Strukturen im HTML der einzelnen Tweet-Seite.
 
-    Statt nach allgemeinen Wörtern wie 'repost' oder 'quote'
-    zu suchen, werden eingebettete Tweet-IDs analysiert.
+    Wenn keine eindeutige Struktur vorhanden ist,
+    wird der Tweet als original behandelt.
     """
+
+    print("")
+    print("========== X-TWEET DEBUG ==========")
 
     # ------------------------------------------------------
-    # Alle Tweet-URLs im HTML finden
+    # HTML normalisieren
     # ------------------------------------------------------
 
-    pattern = (
-        r'https?://(?:www\.)?x\.com/'
-        r'[A-Za-z0-9_]+/'
-        r'status/'
-        r'(\d{15,25})'
-    )
+    html_lower = tweet_html.lower()
 
-    embedded_ids = re.findall(
-        pattern,
-        tweet_html,
-        flags=re.IGNORECASE,
-    )
+    # ------------------------------------------------------
+    # Debug
+    # ------------------------------------------------------
 
-    # Doppelte entfernen
-    embedded_ids = list(
-        dict.fromkeys(embedded_ids)
-    )
-
-    # Eigene ID entfernen
-    referenced_ids = [
-        value
-        for value in embedded_ids
-        if value != tweet_id
+    debug_patterns = [
+        r'"retweeted_status_id_str"\s*:\s*"([^"]+)"',
+        r'"retweeted_status_id"\s*:\s*"([^"]+)"',
+        r'"quoted_status_id_str"\s*:\s*"([^"]+)"',
+        r'"quoted_status_id"\s*:\s*"([^"]+)"',
+        r'"is_quote_status"\s*:\s*(true|false)',
+        r'"quoted_status"\s*:',
+        r'"quoted_status_result"\s*:',
+        r'"quoted_tweet"\s*:',
+        r'"retweeted_status"\s*:',
+        r'"retweeted_status_result"\s*:',
     ]
 
-    print(
-        "Eingebettete Tweet-IDs:",
-        len(embedded_ids),
-    )
+    for pattern in debug_patterns:
 
-    for value in embedded_ids:
-        print(
-            " -",
-            value,
-            "(eigener Tweet)"
-            if value == tweet_id
-            else "(verknüpfter Tweet)",
+        matches = re.findall(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
         )
 
-    # ------------------------------------------------------
-    # Quote / Repost anhand eingebetteter Tweets
-    # ------------------------------------------------------
+        if matches:
 
-    if referenced_ids:
+            print(
+                f"DEBUG {pattern}:"
+            )
 
-        print(
-            "Typ: quote"
-        )
+            for match in matches[:10]:
+                print(
+                    "  ",
+                    match,
+                )
 
-        print(
-            "Erkennung: verknüpfter Tweet gefunden"
-        )
-
-        return "quote"
+    print("========== END DEBUG ==========")
 
     # ------------------------------------------------------
-    # Keine weitere Tweet-ID
+    # Quote Tweet
+    # ------------------------------------------------------
+
+    quote_patterns = [
+        r'"quoted_status"\s*:',
+        r'"quoted_status_result"\s*:',
+        r'"quoted_tweet"\s*:',
+        r'"is_quote_status"\s*:\s*true',
+    ]
+
+    for pattern in quote_patterns:
+
+        if re.search(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
+        ):
+
+            print(
+                "Typ: quote"
+            )
+
+            print(
+                "Erkennung:",
+                pattern,
+            )
+
+            return "quote"
+
+    # ------------------------------------------------------
+    # Retweet
+    # ------------------------------------------------------
+
+    repost_patterns = [
+        r'"retweeted_status"\s*:',
+        r'"retweeted_status_result"\s*:',
+        r'"retweeted_status_id_str"\s*:',
+        r'"retweeted_status_id"\s*:',
+    ]
+
+    for pattern in repost_patterns:
+
+        if re.search(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
+        ):
+
+            print(
+                "Typ: repost"
+            )
+
+            print(
+                "Erkennung:",
+                pattern,
+            )
+
+            return "repost"
+
+    # ------------------------------------------------------
+    # Original
     # ------------------------------------------------------
 
     print(
@@ -184,11 +354,11 @@ def detect_tweet_type(tweet_html, tweet_id):
     )
 
     print(
-        "Erkennung: keine weitere Tweet-ID gefunden"
+        "Erkennung: keine eindeutige "
+        "Repost-/Quote-Struktur gefunden"
     )
 
     return "original"
-
 
 
 # ==========================================================
@@ -894,137 +1064,19 @@ def main():
     tweet_ids = extract_tweet_ids(
         profile_html
     )
-    # ------------------------------------------------------
-    # Tweet-Typen bereits auf der Profilseite bestimmen
-    # ------------------------------------------------------
     
+    if not tweet_ids:
+    
+        raise RuntimeError(
+            "Keine Tweet-IDs gefunden."
+        )
+    
+    profile_tweet_types = detect_profile_tweet_types(
+        profile_html,
+        tweet_ids,
+    )
    
-    print("")
-    print("========== STRUKTURIERTER REPOST DEBUG ==========")
     
-    matches = list(
-        re.finditer(
-            r"retweeted_status",
-            profile_html,
-            flags=re.IGNORECASE,
-        )
-    )
-    
-    print(
-        f"Gefundene retweeted_status-Strukturen: {len(matches)}"
-    )
-    
-    for index, match in enumerate(matches, start=1):
-    
-        # --------------------------------------------------
-        # NUR bis zur nächsten retweeted_status-Struktur
-        # --------------------------------------------------
-    
-        start = match.start()
-    
-        if index < len(matches):
-            end = matches[index].start()
-        else:
-            end = len(profile_html)
-    
-        block = profile_html[start:end]
-    
-        print("")
-        print(
-            f"--- retweeted_status BLOCK #{index} ---"
-        )
-    
-        print(
-            "Blockgröße:",
-            len(block),
-        )
-    
-        # --------------------------------------------------
-        # Alle bekannten Tweet-IDs in diesem Block
-        # --------------------------------------------------
-    
-        found_ids = []
-    
-        for tweet_id in tweet_ids:
-    
-            if tweet_id in block:
-    
-                found_ids.append(
-                    tweet_id
-                )
-    
-        print(
-            "Bekannte Tweet-IDs:",
-            found_ids,
-        )
-    
-        # --------------------------------------------------
-        # Alle 15-25-stelligen IDs
-        # --------------------------------------------------
-    
-        all_ids = re.findall(
-            r"\b\d{15,25}\b",
-            block,
-        )
-    
-        all_ids = list(
-            dict.fromkeys(all_ids)
-        )
-    
-        print(
-            "Alle IDs im Block:"
-        )
-    
-        for value in all_ids[:30]:
-    
-            marker = ""
-    
-            if value in tweet_ids:
-                marker = " <-- PROFIL-TWEET"
-    
-            print(
-                " ",
-                value,
-                marker,
-            )
-    
-        # --------------------------------------------------
-        # Interessante Strukturbegriffe
-        # --------------------------------------------------
-    
-        structure_terms = [
-            "quoted_status",
-            "quoted_status_result",
-            "quoted_tweet",
-            "is_quote_status",
-            "retweeted_status",
-            "retweeted_status_result",
-            "rest_id",
-            "legacy",
-            "full_text",
-            "screen_name",
-            "user_results",
-        ]
-    
-        print(
-            "Struktur-Hinweise:"
-        )
-    
-        lower_block = block.lower()
-    
-        for term in structure_terms:
-    
-            count = lower_block.count(
-                term.lower()
-            )
-    
-            if count:
-                print(
-                    f"  {term}: {count}"
-                )
-    
-    print("")
-    print("========== END STRUKTURIERTER REPOST DEBUG ==========")
     
     if not tweet_ids:
 
@@ -1051,6 +1103,10 @@ def main():
             tweet = extract_tweet_data(
                 tweet_html,
                 tweet_id,
+                detected_type=profile_tweet_types.get(
+                    tweet_id,
+                    "original",
+                ),
             )
 
             tweets.append(
