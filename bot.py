@@ -140,121 +140,96 @@ def get_tweet(tweet_id):
 def detect_tweet_type(tweet_html):
 
     """
-    Versucht anhand verschiedener Hinweise im X-HTML
-    zwischen Original, Repost und Quote-Repost zu unterscheiden.
+    Erkennt Reposts/Quote-Reposts nur anhand konkreter
+    JSON-/HTML-Strukturen des Tweets.
 
-    Wichtig:
-    X verändert die HTML-Struktur gelegentlich.
-    Deshalb werden mehrere unterschiedliche Hinweise geprüft.
+    Allgemeine Wörter wie 'repost', 'retweet' oder 'quote'
+    werden bewusst NICHT mehr als Erkennung verwendet,
+    da diese auch im normalen X-Seiten-HTML vorkommen.
     """
 
-    lower_html = tweet_html.lower()
-
     # ------------------------------------------------------
-    # Diagnose: relevante Begriffe
+    # Strukturierte Daten normalisieren
     # ------------------------------------------------------
 
-    repost_keywords = [
-        "retweeted",
-        "reposted",
-        "retweet",
-        "repost",
-    ]
-
-    quote_keywords = [
-        "quote",
-        "quoted",
-        "quote tweet",
-        "quoted_status",
-    ]
-
-    repost_hits = [
-        keyword
-        for keyword in repost_keywords
-        if keyword in lower_html
-    ]
-
-    quote_hits = [
-        keyword
-        for keyword in quote_keywords
-        if keyword in lower_html
-    ]
+    html_lower = tweet_html.lower()
 
     # ------------------------------------------------------
-    # Strukturierte Daten untersuchen
+    # Echte Retweet-/Repost-Strukturen
     # ------------------------------------------------------
 
-    structured_repost = False
-    structured_quote = False
-
-    structured_patterns_repost = [
-        r'"retweeted_status"',
-        r'"retweeted_status_result"',
-        r'"repost"',
+    repost_patterns = [
+        r'"retweeted_status"\s*:',
+        r'"retweeted_status_result"\s*:',
+        r'"repost_of"\s*:',
+        r'"repost_of_tweet"\s*:',
+        r'"retweeted_tweet"\s*:',
         r'"is_retweet"\s*:\s*true',
-        r'"retweeted"\s*:\s*true',
     ]
 
-    structured_patterns_quote = [
-        r'"quoted_status"',
-        r'"quoted_status_result"',
-        r'"quote_status"',
+    for pattern in repost_patterns:
+
+        if re.search(
+            pattern,
+            html_lower,
+            flags=re.IGNORECASE,
+        ):
+
+            print(
+                "Typ: repost"
+            )
+
+            print(
+                "Erkennung:",
+                pattern,
+            )
+
+            return "repost"
+
+    # ------------------------------------------------------
+    # Echte Quote-Tweet-Strukturen
+    # ------------------------------------------------------
+
+    quote_patterns = [
+        r'"quoted_status"\s*:',
+        r'"quoted_status_result"\s*:',
+        r'"quoted_tweet"\s*:',
         r'"is_quote_status"\s*:\s*true',
-        r'"quoted"\s*:\s*true',
     ]
 
-    for pattern in structured_patterns_repost:
+    for pattern in quote_patterns:
+
         if re.search(
             pattern,
-            tweet_html,
+            html_lower,
             flags=re.IGNORECASE,
         ):
-            structured_repost = True
-            break
 
-    for pattern in structured_patterns_quote:
-        if re.search(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        ):
-            structured_quote = True
-            break
+            print(
+                "Typ: quote"
+            )
 
-    # ------------------------------------------------------
-    # Ergebnis
-    # ------------------------------------------------------
+            print(
+                "Erkennung:",
+                pattern,
+            )
 
-    if structured_quote:
-        tweet_type = "quote"
-
-    elif structured_repost:
-        tweet_type = "repost"
-
-    elif repost_hits and not quote_hits:
-        tweet_type = "repost"
-
-    elif quote_hits:
-        tweet_type = "quote"
-
-    else:
-        tweet_type = "original"
+            return "quote"
 
     # ------------------------------------------------------
-    # Diagnose ausgeben
+    # Kein eindeutiger Hinweis
     # ------------------------------------------------------
-
-    print("Typ:", tweet_type)
 
     print(
-        "Diagnose:",
-        f"Repost-Hinweise={repost_hits or '-'}, "
-        f"Quote-Hinweise={quote_hits or '-'}, "
-        f"strukturierter Repost={structured_repost}, "
-        f"strukturierter Quote={structured_quote}",
+        "Typ: original"
     )
 
-    return tweet_type
+    print(
+        "Erkennung: keine eindeutige "
+        "Repost-/Quote-Struktur gefunden"
+    )
+
+    return "original"
 
 
 # ==========================================================
