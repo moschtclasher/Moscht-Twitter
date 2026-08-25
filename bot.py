@@ -898,27 +898,7 @@ def main():
     # Tweet-Typen bereits auf der Profilseite bestimmen
     # ------------------------------------------------------
     
-    print("")
-    print("========== PROFIL TWEET TYPEN ==========")
-    
-    profile_types = {}
-    
-    for tweet_id in tweet_ids:
-    
-        tweet_type = detect_profile_tweet_type(
-            profile_html,
-            tweet_id,
-        )
-    
-        profile_types[tweet_id] = tweet_type
-    
-        print(
-            tweet_id,
-            "=>",
-            tweet_type,
-        )
-    
-    print("========== END PROFIL TWEET TYPEN ==========")
+   
     print("")
     print("========== STRUKTURIERTER REPOST DEBUG ==========")
     
@@ -1071,10 +1051,6 @@ def main():
             tweet = extract_tweet_data(
                 tweet_html,
                 tweet_id,
-                detected_type=profile_types.get(
-                    tweet_id,
-                    "original",
-                ),
             )
 
             tweets.append(
