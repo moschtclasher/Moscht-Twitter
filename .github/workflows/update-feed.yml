@@ -161,6 +161,7 @@ jobs:
           python bot.py
           python bot_confusion.py
           python bot_lurmii.py
+          python bot_wolfi.py
 
       - name: RSS-Dateien und Bilder speichern
         run: |
