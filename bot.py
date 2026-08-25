@@ -925,53 +925,60 @@ def main():
         profile_html
     )
     print("")
-    print("========== REPOST POSITION DEBUG ==========")
+    print("========== STRUKTURIERTER REPOST DEBUG ==========")
     
-    for tweet_id in tweet_ids:
+    # Alle Vorkommen von "retweeted_status" untersuchen
+    matches = list(
+        re.finditer(
+            r"retweeted_status",
+            profile_html,
+            flags=re.IGNORECASE,
+        )
+    )
     
-        pos = profile_html.find(tweet_id)
+    print(
+        f"Gefundene retweeted_status-Strukturen: {len(matches)}"
+    )
     
-        if pos == -1:
-            print(
-                f"{tweet_id}: nicht gefunden"
-            )
-            continue
+    for index, match in enumerate(matches, start=1):
     
-        # Bereich rund um die Tweet-ID
-        start = max(0, pos - 1500)
+        start = max(0, match.start() - 300)
         end = min(
             len(profile_html),
-            pos + 1500
+            match.end() + 1500,
         )
     
         context = profile_html[start:end]
     
-        print("")
-        print(
-            f"--- Tweet {tweet_id} ---"
+        # Tweet-IDs aus diesem Strukturblock holen
+        context_ids = re.findall(
+            r"\b\d{15,25}\b",
+            context,
         )
     
-        for term in [
-            "retweeted_status",
-            "retweeted",
-            "retweet",
-            "repost",
-            "quoted_status",
-            "quoted",
-            "quote",
-        ]:
+        context_ids = list(
+            dict.fromkeys(context_ids)
+        )
     
-            count = context.lower().count(
-                term.lower()
+        print("")
+        print(
+            f"--- retweeted_status #{index} ---"
+        )
+    
+        print(
+            "Gefundene IDs:",
+            context_ids,
+        )
+    
+        # Nur die ersten relevanten IDs ausgeben
+        for value in context_ids[:10]:
+            print(
+                "  ID:",
+                value,
             )
     
-            if count:
-                print(
-                    f"{term}: {count}"
-                )
-    
     print("")
-    print("========== END REPOST DEBUG ==========")
+    print("========== END STRUKTURIERTER REPOST DEBUG ==========")
     
     if not tweet_ids:
 
