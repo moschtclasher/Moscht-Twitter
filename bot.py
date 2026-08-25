@@ -137,55 +137,87 @@ def get_tweet(tweet_id):
 # Tweet-Typ erkennen
 # ==========================================================
 
-def detect_tweet_type(tweet_html):
+def detect_tweet_type(tweet_html, tweet_id):
 
     """
-    Erkennt Reposts/Quote-Reposts nur anhand konkreter
-    JSON-/HTML-Strukturen des Tweets.
+    Untersucht die HTML-Seite eines einzelnen Tweets.
 
-    Allgemeine Wörter wie 'repost', 'retweet' oder 'quote'
-    werden bewusst NICHT mehr als Erkennung verwendet,
-    da diese auch im normalen X-Seiten-HTML vorkommen.
+    Statt nach allgemeinen Wörtern wie 'repost' oder 'quote'
+    zu suchen, werden eingebettete Tweet-IDs analysiert.
     """
 
     # ------------------------------------------------------
-    # Strukturierte Daten normalisieren
+    # Alle Tweet-URLs im HTML finden
     # ------------------------------------------------------
 
-    html_lower = tweet_html.lower()
+    pattern = (
+        r'https?://(?:www\.)?x\.com/'
+        r'[A-Za-z0-9_]+/'
+        r'status/'
+        r'(\d{15,25})'
+    )
 
-    # ------------------------------------------------------
-    # Echte Retweet-/Repost-Strukturen
-    # ------------------------------------------------------
+    embedded_ids = re.findall(
+        pattern,
+        tweet_html,
+        flags=re.IGNORECASE,
+    )
 
-    repost_patterns = [
-        r'"retweeted_status"\s*:',
-        r'"retweeted_status_result"\s*:',
-        r'"repost_of"\s*:',
-        r'"repost_of_tweet"\s*:',
-        r'"retweeted_tweet"\s*:',
-        r'"is_retweet"\s*:\s*true',
+    # Doppelte entfernen
+    embedded_ids = list(
+        dict.fromkeys(embedded_ids)
+    )
+
+    # Eigene ID entfernen
+    referenced_ids = [
+        value
+        for value in embedded_ids
+        if value != tweet_id
     ]
 
-    for pattern in repost_patterns:
+    print(
+        "Eingebettete Tweet-IDs:",
+        len(embedded_ids),
+    )
 
-        if re.search(
-            pattern,
-            html_lower,
-            flags=re.IGNORECASE,
-        ):
+    for value in embedded_ids:
+        print(
+            " -",
+            value,
+            "(eigener Tweet)"
+            if value == tweet_id
+            else "(verknüpfter Tweet)",
+        )
 
-            print(
-                "Typ: repost"
-            )
+    # ------------------------------------------------------
+    # Quote / Repost anhand eingebetteter Tweets
+    # ------------------------------------------------------
 
-            print(
-                "Erkennung:",
-                pattern,
-            )
+    if referenced_ids:
 
-            return "repost"
+        print(
+            "Typ: quote"
+        )
 
+        print(
+            "Erkennung: verknüpfter Tweet gefunden"
+        )
+
+        return "quote"
+
+    # ------------------------------------------------------
+    # Keine weitere Tweet-ID
+    # ------------------------------------------------------
+
+    print(
+        "Typ: original"
+    )
+
+    print(
+        "Erkennung: keine weitere Tweet-ID gefunden"
+    )
+
+    return "original"
     # ------------------------------------------------------
     # Echte Quote-Tweet-Strukturen
     # ------------------------------------------------------
@@ -243,7 +275,8 @@ def extract_tweet_data(tweet_html, tweet_id):
     # ------------------------------------------------------
 
     tweet_type = detect_tweet_type(
-        tweet_html
+        tweet_html,
+        tweet_id,
     )
 
     # ------------------------------------------------------
