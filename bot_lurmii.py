@@ -236,39 +236,18 @@ def extract_tweet_data(tweet_html, tweet_id):
             except ValueError:
                 pass
 
-    # ------------------------------------------------------
-    # Bilder
-    # ------------------------------------------------------
-    
-    image_urls = re.findall(
-        r'https://pbs\.twimg\.com/media/[^"\'<>\s]+',
-        tweet_html,
-        flags=re.IGNORECASE,
-    )
-    
     clean_images = []
     seen_media_ids = set()
     
     for image_url in image_urls:
     
-        image_url = html.unescape(
-            image_url
-        )
+        if not image_url:
+            continue
     
-        image_url = image_url.replace(
-            "\\/",
-            "/",
-        )
+        image_url = html.unescape(image_url)
+        image_url = image_url.rstrip(".,!?)]}")
     
-        # HTML-Escape-Reste entfernen
-        image_url = image_url.rstrip(
-            "\"'<>"
-        )
-    
-        # --------------------------------------------------
-        # Media-ID ermitteln
-        # --------------------------------------------------
-    
+        # Media-ID aus der X-Bild-URL holen
         match = re.search(
             r"/media/([^/?]+)",
             image_url,
@@ -280,14 +259,20 @@ def extract_tweet_data(tweet_html, tweet_id):
     
         media_id = match.group(1)
     
-        # Dasselbe Bild nur einmal übernehmen
+        # Dasselbe X-Bild nur einmal übernehmen
         if media_id in seen_media_ids:
             continue
     
-        seen_media_ids.add(
-            media_id
-        )
+        seen_media_ids.add(media_id)
     
+        # Originalqualität anfordern
+        if "?" not in image_url:
+            image_url += "?name=orig"
+    
+        clean_images.append(image_url)
+    
+    print("Bilder:", len(clean_images))
+        
         # --------------------------------------------------
         # X benötigt einen Bildparameter
         # --------------------------------------------------
