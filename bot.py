@@ -899,7 +899,36 @@ def main():
     # ------------------------------------------------------
 
     profile_html = get_profile_html()
+    # ======================================================
+    # DEBUG: Profilseite auf Repost-/Quote-Hinweise prüfen
+    # ======================================================
 
+    print("")
+    print("========== PROFIL DEBUG ==========")
+
+    debug_terms = [
+        "retweeted",
+        "retweet",
+        "repost",
+        "quoted",
+        "quote",
+        "QuoteTweet",
+        "retweeted_status",
+        "quoted_status",
+    ]
+
+    profile_lower = profile_html.lower()
+
+    for term in debug_terms:
+        count = profile_lower.count(term.lower())
+
+        print(
+            f"{term}: {count} Treffer"
+        )
+
+    print("========== END PROFIL DEBUG ==========")
+
+    
     tweet_ids = extract_tweet_ids(
         profile_html
     )
