@@ -236,73 +236,73 @@ def extract_tweet_data(tweet_html, tweet_id):
             except ValueError:
                 pass
 
-# ------------------------------------------------------
-# Bilder
-# ------------------------------------------------------
-
-image_urls = re.findall(
-    r'https://pbs\.twimg\.com/media/[^"\'<>\s]+',
-    tweet_html,
-    flags=re.IGNORECASE,
-)
-
-clean_images = []
-seen_media_ids = set()
-
-for image_url in image_urls:
-
-    image_url = html.unescape(
-        image_url
-    )
-
-    image_url = image_url.replace(
-        "\\/",
-        "/",
-    )
-
-    # HTML-Escape-Reste entfernen
-    image_url = image_url.rstrip(
-        "\"'<>"
-    )
-
-    # --------------------------------------------------
-    # Media-ID ermitteln
-    # --------------------------------------------------
-
-    match = re.search(
-        r"/media/([^/?]+)",
-        image_url,
+    # ------------------------------------------------------
+    # Bilder
+    # ------------------------------------------------------
+    
+    image_urls = re.findall(
+        r'https://pbs\.twimg\.com/media/[^"\'<>\s]+',
+        tweet_html,
         flags=re.IGNORECASE,
     )
-
-    if not match:
-        continue
-
-    media_id = match.group(1)
-
-    # Dasselbe Bild nur einmal übernehmen
-    if media_id in seen_media_ids:
-        continue
-
-    seen_media_ids.add(
-        media_id
+    
+    clean_images = []
+    seen_media_ids = set()
+    
+    for image_url in image_urls:
+    
+        image_url = html.unescape(
+            image_url
+        )
+    
+        image_url = image_url.replace(
+            "\\/",
+            "/",
+        )
+    
+        # HTML-Escape-Reste entfernen
+        image_url = image_url.rstrip(
+            "\"'<>"
+        )
+    
+        # --------------------------------------------------
+        # Media-ID ermitteln
+        # --------------------------------------------------
+    
+        match = re.search(
+            r"/media/([^/?]+)",
+            image_url,
+            flags=re.IGNORECASE,
+        )
+    
+        if not match:
+            continue
+    
+        media_id = match.group(1)
+    
+        # Dasselbe Bild nur einmal übernehmen
+        if media_id in seen_media_ids:
+            continue
+    
+        seen_media_ids.add(
+            media_id
+        )
+    
+        # --------------------------------------------------
+        # X benötigt einen Bildparameter
+        # --------------------------------------------------
+    
+        if "?" not in image_url:
+            image_url += "?name=orig"
+    
+        clean_images.append(
+            image_url
+        )
+    
+    print(
+        "Bilder:",
+        len(clean_images),
     )
-
-    # --------------------------------------------------
-    # X benötigt einen Bildparameter
-    # --------------------------------------------------
-
-    if "?" not in image_url:
-        image_url += "?name=orig"
-
-    clean_images.append(
-        image_url
-    )
-
-print(
-    "Bilder:",
-    len(clean_images),
-)
 
         # --------------------------------------------------
         # Media-ID aus URL bestimmen
