@@ -159,8 +159,43 @@ def extract_tweet_data(tweet_html, tweet_id):
             text = html.unescape(
                 match.group(1)
             ).strip()
-
             break
+
+    # ------------------------------------------------------
+    # t.co Links auflösen
+    # ------------------------------------------------------
+
+    # Falls X im og:description nur einen t.co-Link liefert,
+    # versuchen wir den Link direkt aufzulösen.
+
+    tco_links = re.findall(
+        r"https://t\.co/[A-Za-z0-9]+",
+        text,
+    )
+
+    for tco_url in tco_links:
+
+        try:
+
+            response = requests.get(
+                tco_url,
+                headers=HEADERS,
+                timeout=15,
+                allow_redirects=True,
+            )
+
+            final_url = response.url
+
+            if final_url and final_url != tco_url:
+
+                text = text.replace(
+                    tco_url,
+                    final_url,
+                )
+
+        except requests.RequestException:
+
+            pass
 
     # ------------------------------------------------------
     # Datum
@@ -212,6 +247,7 @@ def extract_tweet_data(tweet_html, tweet_id):
     )
 
     clean_images = []
+    seen_media_ids = set()
 
     for image_url in image_urls:
 
@@ -224,13 +260,38 @@ def extract_tweet_data(tweet_html, tweet_id):
             "/",
         )
 
-        if image_url not in clean_images:
-            clean_images.append(
-                image_url
-            )
+        image_url = image_url.split("?")[0]
+
+        # --------------------------------------------------
+        # Media-ID aus URL bestimmen
+        # --------------------------------------------------
+
+        match = re.search(
+            r"/media/([^/]+)",
+            image_url,
+            flags=re.IGNORECASE,
+        )
+
+        media_id = (
+            match.group(1)
+            if match
+            else image_url
+        )
+
+        # Dasselbe Bild nicht mehrfach übernehmen
+        if media_id in seen_media_ids:
+            continue
+
+        seen_media_ids.add(
+            media_id
+        )
+
+        clean_images.append(
+            image_url
+        )
 
     # ------------------------------------------------------
-    # Fallback Datum
+    # Datum-Fallback
     # ------------------------------------------------------
 
     if created_at is None:
@@ -265,11 +326,6 @@ def extract_tweet_data(tweet_html, tweet_id):
         "created_at": created_at,
         "images": clean_images,
     }
-
-
-# ==========================================================
-# Bilder herunterladen
-# ==========================================================
 
 def download_image(
     image_url,
