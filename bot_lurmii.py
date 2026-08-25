@@ -236,31 +236,73 @@ def extract_tweet_data(tweet_html, tweet_id):
             except ValueError:
                 pass
 
-    # ------------------------------------------------------
-    # Bilder
-    # ------------------------------------------------------
+# ------------------------------------------------------
+# Bilder
+# ------------------------------------------------------
 
-    image_urls = re.findall(
-        r'https://pbs\.twimg\.com/media/[^"\'&\s]+',
-        tweet_html,
+image_urls = re.findall(
+    r'https://pbs\.twimg\.com/media/[^"\'<>\s]+',
+    tweet_html,
+    flags=re.IGNORECASE,
+)
+
+clean_images = []
+seen_media_ids = set()
+
+for image_url in image_urls:
+
+    image_url = html.unescape(
+        image_url
+    )
+
+    image_url = image_url.replace(
+        "\\/",
+        "/",
+    )
+
+    # HTML-Escape-Reste entfernen
+    image_url = image_url.rstrip(
+        "\"'<>"
+    )
+
+    # --------------------------------------------------
+    # Media-ID ermitteln
+    # --------------------------------------------------
+
+    match = re.search(
+        r"/media/([^/?]+)",
+        image_url,
         flags=re.IGNORECASE,
     )
 
-    clean_images = []
-    seen_media_ids = set()
+    if not match:
+        continue
 
-    for image_url in image_urls:
+    media_id = match.group(1)
 
-        image_url = html.unescape(
-            image_url
-        )
+    # Dasselbe Bild nur einmal übernehmen
+    if media_id in seen_media_ids:
+        continue
 
-        image_url = image_url.replace(
-            "\\/",
-            "/",
-        )
+    seen_media_ids.add(
+        media_id
+    )
 
-        image_url = image_url.split("?")[0]
+    # --------------------------------------------------
+    # X benötigt einen Bildparameter
+    # --------------------------------------------------
+
+    if "?" not in image_url:
+        image_url += "?name=orig"
+
+    clean_images.append(
+        image_url
+    )
+
+print(
+    "Bilder:",
+    len(clean_images),
+)
 
         # --------------------------------------------------
         # Media-ID aus URL bestimmen
