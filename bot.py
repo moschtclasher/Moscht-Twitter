@@ -89,8 +89,7 @@ def extract_tweet_ids(profile_html):
         flags=re.IGNORECASE,
     )
 
-    # Doppelte IDs entfernen,
-    # Reihenfolge aus dem HTML beibehalten
+    # Doppelte IDs entfernen, Reihenfolge beibehalten
     ids = list(dict.fromkeys(ids))
 
     print(
@@ -101,38 +100,6 @@ def extract_tweet_ids(profile_html):
         print(" -", tweet_id)
 
     return ids
-
-
-# ==========================================================
-# Tweet abrufen
-# ==========================================================
-
-def get_tweet(tweet_id):
-
-    url = (
-        f"https://x.com/{USERNAME}/status/{tweet_id}"
-    )
-
-    print("")
-    print("Abrufe Tweet:")
-    print(url)
-
-    response = requests.get(
-        url,
-        headers=HEADERS,
-        timeout=30,
-    )
-
-    print(
-        "HTTP Status:",
-        response.status_code,
-    )
-
-    response.raise_for_status()
-
-    return response.text
-
-
 # ==========================================================
 # Tweet-Typ erkennen
 # ==========================================================
@@ -932,7 +899,55 @@ def main():
     tweet_ids = extract_tweet_ids(
         profile_html
     )
-
+    print("")
+    print("========== REPOST POSITION DEBUG ==========")
+    
+    for tweet_id in tweet_ids:
+    
+        pos = profile_html.find(tweet_id)
+    
+        if pos == -1:
+            print(
+                f"{tweet_id}: nicht gefunden"
+            )
+            continue
+    
+        # Bereich rund um die Tweet-ID
+        start = max(0, pos - 1500)
+        end = min(
+            len(profile_html),
+            pos + 1500
+        )
+    
+        context = profile_html[start:end]
+    
+        print("")
+        print(
+            f"--- Tweet {tweet_id} ---"
+        )
+    
+        for term in [
+            "retweeted_status",
+            "retweeted",
+            "retweet",
+            "repost",
+            "quoted_status",
+            "quoted",
+            "quote",
+        ]:
+    
+            count = context.lower().count(
+                term.lower()
+            )
+    
+            if count:
+                print(
+                    f"{term}: {count}"
+                )
+    
+    print("")
+    print("========== END REPOST DEBUG ==========")
+    
     if not tweet_ids:
 
         raise RuntimeError(
