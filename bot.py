@@ -235,6 +235,31 @@ def detect_tweet_type(tweet_html, tweet_id):
 # Tweet-Daten aus HTML
 # ==========================================================
 
+def get_tweet(tweet_id):
+
+    url = (
+        f"https://x.com/{USERNAME}/status/{tweet_id}"
+    )
+
+    print("")
+    print("Abrufe Tweet:")
+    print(url)
+
+    response = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=30,
+    )
+
+    print(
+        "HTTP Status:",
+        response.status_code,
+    )
+
+    response.raise_for_status()
+
+    return response.text
+
 def extract_tweet_data(tweet_html, tweet_id):
 
     # ------------------------------------------------------
