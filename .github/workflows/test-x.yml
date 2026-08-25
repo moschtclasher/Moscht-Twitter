@@ -8,55 +8,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Sorsa API testen
-        env:
-          SORSA_API_KEY: ${{ secrets.SORSA_API_KEY }}
+      - name: FxTwitter testen
         run: |
           python - <<'PY'
-          import os
           import requests
-
-          api_key = os.environ["SORSA_API_KEY"]
-
-          url = "https://api.sorsa.io/v3/search-tweets"
-
-          headers = {
-              "ApiKey": api_key,
-              "Content-Type": "application/json",
-          }
-
-          data = {
-              "query": "from:Twitch_Lurmii",
-              "order": "latest",
-          }
-
-          response = requests.post(
+          import json
+      
+          username = "Twitch_Lurmii"
+      
+          url = f"https://api.fxtwitter.com/2/user/{username}/tweets"
+      
+          print("=" * 60)
+          print("Teste FxTwitter")
+          print("=" * 60)
+          print("URL:", url)
+      
+          response = requests.get(
               url,
-              headers=headers,
-              json=data,
               timeout=30,
           )
-
+      
           print("HTTP Status:", response.status_code)
-          print("Antwortgröße:", len(response.text))
-
+          print("Antwortgröße:", len(response.content))
+      
+          print("")
+          print("Antwort:")
+      
+          try:
+              data = response.json()
+              print(json.dumps(data, indent=2, ensure_ascii=False)[:10000])
+          except Exception:
+              print(response.text[:5000])
+      
           if response.status_code != 200:
-              print(response.text)
-              raise SystemExit(1)
-
-          result = response.json()
-
-          tweets = result.get("tweets", [])
-
+              raise SystemExit("❌ FxTwitter-Test fehlgeschlagen")
+      
           print("")
-          print("Anzahl Tweets:", len(tweets))
-          print("")
-
-          for tweet in tweets[:5]:
-              print("=" * 60)
-              print("ID:", tweet.get("id"))
-              print("Datum:", tweet.get("created_at"))
-              print("Autor:", tweet.get("user", {}).get("username"))
-              print("Text:", tweet.get("full_text"))
-              print("Medien:", tweet.get("media"))
+          print("✅ FxTwitter antwortet")
           PY
