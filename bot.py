@@ -1442,33 +1442,173 @@ def main():
 
     profile_html = get_profile_html()
     # ======================================================
-    # DEBUG: Profilseite auf Repost-/Quote-Hinweise prüfen
+    # DEBUG: Konkrete Repost-Hinweise im Profil-HTML suchen
     # ======================================================
-
+    
     print("")
-    print("========== PROFIL DEBUG ==========")
-
-    debug_terms = [
-        "retweeted",
-        "retweet",
-        "repost",
-        "quoted",
-        "quote",
-        "QuoteTweet",
-        "retweeted_status",
-        "quoted_status",
+    print("=" * 60)
+    print("========== KONKRETER REPOST DEBUG ==========")
+    print("=" * 60)
+    
+    # Wir suchen NICHT mehr allgemein nach "repost",
+    # sondern nach Formulierungen/Strukturen, die tatsächlich
+    # auf einen Repost eines anderen Accounts hindeuten.
+    
+    repost_search_patterns = [
+        r"reposted",
+        r"repost von",
+        r"repost",
+        r"retweeted",
+        r"retweet",
+        r"reposted by",
+        r"retweeted by",
+        r"repost_of",
+        r"repost_of_tweet",
+        r"retweeted_tweet",
+        r"retweeted_tweet_result",
+        r"retweeted_status",
+        r"original_tweet",
+        r"source_tweet",
+        r"repost_source",
     ]
-
+    
     profile_lower = profile_html.lower()
-
-    for term in debug_terms:
-        count = profile_lower.count(term.lower())
-
-        print(
-            f"{term}: {count} Treffer"
+    
+    for pattern in repost_search_patterns:
+    
+        print("")
+        print("-" * 60)
+        print(f"SUCHMUSTER: {pattern}")
+        print("-" * 60)
+    
+        matches = list(
+            re.finditer(
+                pattern,
+                profile_lower,
+                flags=re.IGNORECASE,
+            )
         )
-
-    print("========== END PROFIL DEBUG ==========")
+    
+        print(
+            f"Treffer: {len(matches)}"
+        )
+    
+        # Nur die ersten 10 Treffer untersuchen
+        for number, match in enumerate(matches[:10], 1):
+    
+            start = max(
+                0,
+                match.start() - 1000,
+            )
+    
+            end = min(
+                len(profile_html),
+                match.end() + 2000,
+            )
+    
+            context = profile_html[start:end]
+    
+            print("")
+            print(
+                f"========== TREFFER #{number} =========="
+            )
+    
+            print(context)
+    
+            # --------------------------------------------------
+            # IDs im Kontext
+            # --------------------------------------------------
+    
+            ids = re.findall(
+                r"\b\d{15,25}\b",
+                context,
+            )
+    
+            ids = list(
+                dict.fromkeys(ids)
+            )
+    
+            print("")
+            print("Gefundene mögliche IDs:")
+    
+            if ids:
+                for value in ids[:30]:
+                    print(
+                        "  ",
+                        value,
+                    )
+            else:
+                print(
+                    "   keine"
+                )
+    
+            # --------------------------------------------------
+            # Tweet-URLs
+            # --------------------------------------------------
+    
+            tweet_urls = re.findall(
+                r'https?://(?:www\.)?(?:x\.com|twitter\.com)/[^"\'<>\s]+/status/\d{15,25}',
+                context,
+                flags=re.IGNORECASE,
+            )
+    
+            tweet_urls = list(
+                dict.fromkeys(tweet_urls)
+            )
+    
+            print("")
+            print("Gefundene Tweet-URLs:")
+    
+            if tweet_urls:
+                for url in tweet_urls[:20]:
+                    print(
+                        "  ",
+                        url,
+                    )
+            else:
+                print(
+                    "   keine"
+                )
+    
+            # --------------------------------------------------
+            # screen_name / username
+            # --------------------------------------------------
+    
+            usernames = re.findall(
+                r'"screen_name"\s*:\s*"([^"]+)"',
+                context,
+                flags=re.IGNORECASE,
+            )
+    
+            usernames += re.findall(
+                r'"username"\s*:\s*"([^"]+)"',
+                context,
+                flags=re.IGNORECASE,
+            )
+    
+            usernames = list(
+                dict.fromkeys(usernames)
+            )
+    
+            print("")
+            print("Gefundene Usernamen:")
+    
+            if usernames:
+                for username in usernames[:30]:
+                    print(
+                        "  ",
+                        username,
+                    )
+            else:
+                print(
+                    "   keine"
+                )
+    
+    
+    print("")
+    print("=" * 60)
+    print("========== END KONKRETER REPOST DEBUG ==========")
+    print("=" * 60)
 
     
     tweet_ids = extract_tweet_ids(
