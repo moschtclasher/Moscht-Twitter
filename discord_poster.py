@@ -49,6 +49,17 @@ FEEDS = [
         "mention": "<@&1537072600948150352>",
         "emoji": "<a:blitzcnf:1475376256970260582>",
     },
+        {
+        "feed_file": "feed-wolfi.xml",
+        "webhook": os.environ["DISCORD_WEBHOOK_WOLFI"],
+        "display_name": "Wolfi Twitter/X",
+        "avatar_url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_avatar.png",
+        "footer": "𝕏 • @ClashWithWolfi",
+        "history": 5,
+        "color": 0xFFF533,
+        "mention": "<@&1541713656839151696>",
+        "emoji": "<a:CHEER:1541717896680706048>",
+    },
 ]
 
 
