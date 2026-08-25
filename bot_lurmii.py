@@ -134,32 +134,57 @@ def get_tweet(tweet_id):
 # Tweet Daten aus HTML
 # ==========================================================
 
-def extract_tweet_data(tweet_html, tweet_id):
-
     # ------------------------------------------------------
-    # Tweet Text
+    # Bilder aus dem X-HTML ermitteln
     # ------------------------------------------------------
 
-    text = ""
+    image_urls = re.findall(
+        r'https://pbs\.twimg\.com/media/[^"\'&<> ]+',
+        tweet_html,
+        flags=re.IGNORECASE,
+    )
 
-    patterns = [
-        r'<meta[^>]+property="og:description"[^>]+content="([^"]*)"',
-        r'<meta[^>]+name="description"[^>]+content="([^"]*)"',
-    ]
+    clean_images = []
+    seen_media_ids = set()
 
-    for pattern in patterns:
+    for image_url in image_urls:
 
+        if not image_url:
+            continue
+
+        image_url = html.unescape(image_url)
+        image_url = image_url.rstrip(".,!?)]}")
+
+        # Media-ID ermitteln
         match = re.search(
-            pattern,
-            tweet_html,
+            r"/media/([^/?]+)",
+            image_url,
             flags=re.IGNORECASE,
         )
 
-        if match:
-            text = html.unescape(
-                match.group(1)
-            ).strip()
-            break
+        if not match:
+            continue
+
+        media_id = match.group(1)
+
+        # Bereits vorhandene Media-ID überspringen
+        if media_id in seen_media_ids:
+            continue
+
+        seen_media_ids.add(media_id)
+
+        # Immer Originalqualität anfordern
+        image_url = (
+            f"https://pbs.twimg.com/media/"
+            f"{media_id}?name=orig"
+        )
+
+        clean_images.append(image_url)
+
+    print(
+        "Bilder:",
+        len(clean_images),
+    )
 
     # ------------------------------------------------------
     # t.co Links auflösen
