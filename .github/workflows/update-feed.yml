@@ -24,6 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
+
       - name: FxTwitter Einzelpost testen
         run: |
           python - <<'PY'
@@ -67,6 +68,54 @@ jobs:
           print("")
           print("✅ FxTwitter Einzelpost funktioniert")
           PY
+      - name: FxTwitter Timeline testen
+        run: |
+          python - <<'PY'
+          import requests
+          import json
+      
+          username = "Twitch_Lurmii"
+      
+          urls = [
+              f"https://api.fxtwitter.com/user/{username}",
+              f"https://api.fxtwitter.com/profile/{username}",
+              f"https://api.fxtwitter.com/{username}",
+          ]
+      
+          print("=" * 60)
+          print("Teste FxTwitter Profil/Timeline")
+          print("=" * 60)
+      
+          for url in urls:
+              print("")
+              print("Teste:", url)
+      
+              try:
+                  response = requests.get(
+                      url,
+                      timeout=30,
+                  )
+      
+                  print("HTTP:", response.status_code)
+                  print("Größe:", len(response.content))
+      
+                  if response.status_code == 200:
+                      try:
+                          data = response.json()
+                          print(
+                              json.dumps(
+                                  data,
+                                  indent=2,
+                                  ensure_ascii=False
+                              )[:5000]
+                          )
+                      except Exception:
+                          print(response.text[:2000])
+      
+              except Exception as e:
+                  print("Fehler:", e)
+          PY
+
 
       - name: RSS-Feeds und Bilder erstellen
         run: |
