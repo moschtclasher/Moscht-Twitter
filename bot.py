@@ -143,29 +143,11 @@ def extract_tweet_data(tweet_html, tweet_id):
     # ------------------------------------------------------
     text = ""
 
-        # ------------------------------------------------------
-    # Repost / Retweet erkennen
+    # ------------------------------------------------------
+    # Tweet-Typ
     # ------------------------------------------------------
     tweet_type = "original"
-
-    repost_patterns = [
-        r'\bretweeted by\b',
-        r'\bretweet\b',
-        r'\breposted by\b',
-        r'\brepost\b',
-        r'"isRetweet"\s*:\s*true',
-        r'"retweeted"\s*:\s*true',
-    ]
-
-    for pattern in repost_patterns:
-        if re.search(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        ):
-            tweet_type = "repost"
-            break
-
+    
     print("Typ:", tweet_type)
 
     # X stellt den Tweet-Text auf der öffentlichen Seite meist
