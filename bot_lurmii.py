@@ -304,34 +304,6 @@ def extract_tweet_data(tweet_html, tweet_id):
         len(clean_images),
     )
 
-        # --------------------------------------------------
-        # Media-ID aus URL bestimmen
-        # --------------------------------------------------
-
-        match = re.search(
-            r"/media/([^/]+)",
-            image_url,
-            flags=re.IGNORECASE,
-        )
-
-        media_id = (
-            match.group(1)
-            if match
-            else image_url
-        )
-
-        # Dasselbe Bild nicht mehrfach übernehmen
-        if media_id in seen_media_ids:
-            continue
-
-        seen_media_ids.add(
-            media_id
-        )
-
-        clean_images.append(
-            image_url
-        )
-
     # ------------------------------------------------------
     # Datum-Fallback
     # ------------------------------------------------------
