@@ -620,7 +620,7 @@ def main():
     
     # Mehr Tweets prüfen, da X einen angepinnten Tweet
     # vor die eigentlichen neuesten Tweets setzen kann.
-    for tweet_id in tweet_ids[:5]:
+    for tweet_id in tweet_ids[:10]:
     
         try:
     
@@ -643,6 +643,29 @@ def main():
             )
     
             print(e)
+    
+    
+    # Nach tatsächlichem Veröffentlichungsdatum sortieren.
+    tweets.sort(
+        key=lambda tweet: tweet["created_at"],
+        reverse=True,
+    )
+    
+    
+    # Nur die 5 neuesten Tweets verwenden.
+    tweets = tweets[:5]
+    
+    print("")
+    print(
+        f"Verwende die {len(tweets)} neuesten Tweets:"
+    )
+    
+    for tweet in tweets:
+    
+        print(
+            f" - {tweet['id']} | "
+            f"{format_datetime(tweet['created_at'], usegmt=True)}"
+        )
     
     
     # Nach tatsächlichem Veröffentlichungsdatum sortieren.
