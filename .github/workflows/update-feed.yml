@@ -19,143 +19,6 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Abhängigkeiten installieren
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
-
-      - name: FxTwitter Einzelpost testen
-        run: |
-          python - <<'PY'
-          import requests
-          import json
-      
-          username = "Twitch_Lurmii"
-          tweet_id = "2091762397446820319"
-      
-          url = f"https://api.fxtwitter.com/{username}/status/{tweet_id}"
-      
-          print("=" * 60)
-          print("Teste FxTwitter Einzelpost")
-          print("=" * 60)
-          print("URL:", url)
-      
-          response = requests.get(
-              url,
-              timeout=30,
-          )
-      
-          print("HTTP Status:", response.status_code)
-          print("Antwortgröße:", len(response.content))
-      
-          try:
-              data = response.json()
-      
-              print("")
-              print(json.dumps(
-                  data,
-                  indent=2,
-                  ensure_ascii=False
-              )[:15000])
-      
-          except Exception:
-              print(response.text[:5000])
-      
-          if response.status_code != 200:
-              raise SystemExit("❌ FxTwitter-Test fehlgeschlagen")
-      
-          print("")
-          print("✅ FxTwitter Einzelpost funktioniert")
-          PY
-      - name: X Timeline direkt testen
-        run: |
-          python - <<'PY'
-          import requests
-          import re
-      
-          username = "Twitch_Lurmii"
-      
-          url = f"https://x.com/{username}"
-      
-          print("=" * 60)
-          print("Teste direkten X-Zugriff")
-          print("=" * 60)
-          print("URL:", url)
-      
-          headers = {
-              "User-Agent": (
-                  "Mozilla/5.0 (X11; Linux x86_64) "
-                  "AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) "
-                  "Chrome/131.0.0.0 Safari/537.36"
-              ),
-              "Accept": (
-                  "text/html,application/xhtml+xml,"
-                  "application/xml;q=0.9,*/*;q=0.8"
-              ),
-              "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
-          }
-      
-          response = requests.get(
-              url,
-              headers=headers,
-              timeout=30,
-          )
-      
-          print("HTTP Status:", response.status_code)
-          print("Antwortgröße:", len(response.content))
-          print("Content-Type:", response.headers.get("content-type"))
-      
-          html = response.text
-      
-          print("")
-          print("Suche nach Status-IDs ...")
-      
-          ids = re.findall(
-              r"/(?:Twitch_Lurmii|[^/]+)/status/(\d{15,25})",
-              html,
-          )
-      
-          ids = list(dict.fromkeys(ids))
-      
-          print("Gefundene Status-IDs:", len(ids))
-      
-          for tweet_id in ids[:20]:
-              print(" -", tweet_id)
-      
-          print("")
-          print("Suche nach Tweet-URLs ...")
-      
-          urls = re.findall(
-              r"https://x\.com/[A-Za-z0-9_]+/status/\d{15,25}",
-              html,
-          )
-      
-          urls = list(dict.fromkeys(urls))
-      
-          for tweet_url in urls[:20]:
-              print(" -", tweet_url)
-      
-          print("")
-      
-          if response.status_code != 200:
-              raise SystemExit(
-                  f"❌ X antwortet mit HTTP {response.status_code}"
-              )
-      
-          if not ids:
-              print(
-                  "⚠️ X ist erreichbar, aber im HTML "
-                  "wurden keine Tweet-IDs gefunden."
-              )
-          else:
-              print(
-                  "✅ X liefert Tweet-IDs direkt im HTML."
-              )
-          PY
-
-
       - name: RSS-Feeds und Bilder erstellen
         run: |
           python bot.py
@@ -187,6 +50,7 @@ jobs:
           DISCORD_WEBHOOK_MOSCHT: ${{ secrets.DISCORD_WEBHOOK_MOSCHT }}
           DISCORD_WEBHOOK_CONFUSION: ${{ secrets.DISCORD_WEBHOOK_CONFUSION }}
           DISCORD_WEBHOOK_LURMII: ${{ secrets.DISCORD_WEBHOOK_LURMII }}
+          DISCORD_WEBHOOK_WOLFI: ${{ secrets.DISCORD_WEBHOOK_WOLFI }}
         run: |
           python discord_poster.py
 
@@ -197,9 +61,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Keine Änderungen an last_posts.json."
           else
-
-
-
             git commit -m "Update Discord state"
             git push
           fi
