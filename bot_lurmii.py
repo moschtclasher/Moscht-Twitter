@@ -134,10 +134,69 @@ def get_tweet(tweet_id):
 # Tweet Daten aus HTML
 # ==========================================================
 
+def extract_tweet_data(tweet_html, tweet_id):
+    """Extrahiert Text, Datum und Bilder aus dem HTML eines Tweets."""
+
+    # ------------------------------------------------------
+    # Text
+    # ------------------------------------------------------
+    text = ""
+
+    # X stellt den Tweet-Text auf der öffentlichen Seite meist
+    # über og:description bzw. twitter:description bereit.
+    text_patterns = [
+        r'<meta[^>]+property="og:description"[^>]+content="([^"]*)"',
+        r'<meta[^>]+name="twitter:description"[^>]+content="([^"]*)"',
+        r'<meta[^>]+name="description"[^>]+content="([^"]*)"',
+    ]
+
+    for pattern in text_patterns:
+        match = re.search(pattern, tweet_html, flags=re.IGNORECASE)
+        if match:
+            text = html.unescape(match.group(1)).strip()
+            if text:
+                break
+
+    # Falls das Attribut in anderer Reihenfolge vorkommt.
+    if not text:
+        reverse_patterns = [
+            r'<meta[^>]+content="([^"]*)"[^>]+property="og:description"',
+            r'<meta[^>]+content="([^"]*)"[^>]+name="twitter:description"',
+        ]
+        for pattern in reverse_patterns:
+            match = re.search(pattern, tweet_html, flags=re.IGNORECASE)
+            if match:
+                text = html.unescape(match.group(1)).strip()
+                if text:
+                    break
+
+    # ------------------------------------------------------
+    # t.co Links auflösen
+    # ------------------------------------------------------
+    tco_links = re.findall(
+        r"https://t\.co/[A-Za-z0-9]+",
+        text,
+    )
+
+    for tco_url in tco_links:
+        try:
+            response = requests.get(
+                tco_url,
+                headers=HEADERS,
+                timeout=15,
+                allow_redirects=True,
+            )
+            final_url = response.url
+
+            if final_url and final_url != tco_url:
+                text = text.replace(tco_url, final_url)
+
+        except requests.RequestException:
+            pass
+
     # ------------------------------------------------------
     # Bilder aus dem X-HTML ermitteln
     # ------------------------------------------------------
-
     image_urls = re.findall(
         r'https://pbs\.twimg\.com/media/[^"\'&<> ]+',
         tweet_html,
@@ -148,14 +207,12 @@ def get_tweet(tweet_id):
     seen_media_ids = set()
 
     for image_url in image_urls:
-
         if not image_url:
             continue
 
         image_url = html.unescape(image_url)
         image_url = image_url.rstrip(".,!?)]}")
 
-        # Media-ID ermitteln
         match = re.search(
             r"/media/([^/?]+)",
             image_url,
@@ -167,13 +224,12 @@ def get_tweet(tweet_id):
 
         media_id = match.group(1)
 
-        # Bereits vorhandene Media-ID überspringen
         if media_id in seen_media_ids:
             continue
 
         seen_media_ids.add(media_id)
 
-        # Immer Originalqualität anfordern
+        # Immer Originalqualität anfordern.
         image_url = (
             f"https://pbs.twimg.com/media/"
             f"{media_id}?name=orig"
@@ -181,51 +237,9 @@ def get_tweet(tweet_id):
 
         clean_images.append(image_url)
 
-    print(
-        "Bilder:",
-        len(clean_images),
-    )
-
-    # ------------------------------------------------------
-    # t.co Links auflösen
-    # ------------------------------------------------------
-
-    # Falls X im og:description nur einen t.co-Link liefert,
-    # versuchen wir den Link direkt aufzulösen.
-
-    tco_links = re.findall(
-        r"https://t\.co/[A-Za-z0-9]+",
-        text,
-    )
-
-    for tco_url in tco_links:
-
-        try:
-
-            response = requests.get(
-                tco_url,
-                headers=HEADERS,
-                timeout=15,
-                allow_redirects=True,
-            )
-
-            final_url = response.url
-
-            if final_url and final_url != tco_url:
-
-                text = text.replace(
-                    tco_url,
-                    final_url,
-                )
-
-        except requests.RequestException:
-
-            pass
-
     # ------------------------------------------------------
     # Datum
     # ------------------------------------------------------
-
     created_at = None
 
     date_patterns = [
@@ -234,7 +248,6 @@ def get_tweet(tweet_id):
     ]
 
     for pattern in date_patterns:
-
         match = re.search(
             pattern,
             tweet_html,
@@ -242,104 +255,26 @@ def get_tweet(tweet_id):
         )
 
         if match:
-
-            value = html.unescape(
-                match.group(1)
-            ).strip()
+            value = html.unescape(match.group(1)).strip()
 
             try:
-
                 created_at = datetime.fromisoformat(
-                    value.replace(
-                        "Z",
-                        "+00:00",
-                    )
+                    value.replace("Z", "+00:00")
                 )
-
                 break
-
             except ValueError:
                 pass
 
-        # ------------------------------------------------------
-    # Bilder aus dem X-HTML ermitteln
-    # ------------------------------------------------------
-
-    image_urls = re.findall(
-        r'https://pbs\.twimg\.com/media/[^"\'&<> ]+',
-        tweet_html,
-        flags=re.IGNORECASE,
-    )
-
-    clean_images = []
-    seen_media_ids = set()
-
-    for image_url in image_urls:
-
-        if not image_url:
-            continue
-
-        image_url = html.unescape(image_url)
-        image_url = image_url.rstrip(".,!?)]}")
-
-        # Media-ID aus der X-Bild-URL holen
-        match = re.search(
-            r"/media/([^/?]+)",
-            image_url,
-            flags=re.IGNORECASE,
-        )
-
-        if not match:
-            continue
-
-        media_id = match.group(1)
-
-        # Dasselbe Bild nur einmal übernehmen
-        if media_id in seen_media_ids:
-            continue
-
-        seen_media_ids.add(media_id)
-
-        # Originalqualität anfordern
-        if "?" not in image_url:
-            image_url += "?name=orig"
-
-        clean_images.append(image_url)
-
-    print(
-        "Bilder:",
-        len(clean_images),
-    )
-
-    # ------------------------------------------------------
-    # Datum-Fallback
-    # ------------------------------------------------------
-
     if created_at is None:
-
-        created_at = datetime.now(
-            timezone.utc
-        )
+        created_at = datetime.now(timezone.utc)
 
     if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
 
-        created_at = created_at.replace(
-            tzinfo=timezone.utc
-        )
+    created_at = created_at.astimezone(timezone.utc)
 
-    created_at = created_at.astimezone(
-        timezone.utc
-    )
-
-    print(
-        "Text:",
-        text[:150],
-    )
-
-    print(
-        "Bilder:",
-        len(clean_images),
-    )
+    print("Text:", text[:150])
+    print("Bilder:", len(clean_images))
 
     return {
         "id": tweet_id,
@@ -347,6 +282,7 @@ def get_tweet(tweet_id):
         "created_at": created_at,
         "images": clean_images,
     }
+
 
 def download_image(
     image_url,
