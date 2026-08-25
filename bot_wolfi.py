@@ -620,7 +620,7 @@ def main():
     
     # Mehr Tweets prüfen, da X einen angepinnten Tweet
     # vor die eigentlichen neuesten Tweets setzen kann.
-    for tweet_id in tweet_ids[:3]:
+    for tweet_id in tweet_ids[:5]:
     
         try:
     
@@ -652,8 +652,8 @@ def main():
     )
     
     
-    # Nur die 5 neuesten Tweets verwenden.
-    tweets = tweets[:5]
+    # Nur die 3 neuesten Tweets verwenden.
+    tweets = tweets[:3]
     
     print("")
     print(
