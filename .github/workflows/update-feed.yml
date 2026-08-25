@@ -64,6 +64,46 @@ jobs:
           if git diff --cached --quiet; then
             echo "Keine Änderungen an last_posts.json."
           else
+
+
+      - name: FxTwitter testen
+        run: |
+          python - <<'PY'
+          import requests
+          import json
+      
+          username = "Twitch_Lurmii"
+      
+          url = f"https://api.fxtwitter.com/2/user/{username}/tweets"
+      
+          print("=" * 60)
+          print("Teste FxTwitter")
+          print("=" * 60)
+          print("URL:", url)
+      
+          response = requests.get(
+              url,
+              timeout=30,
+          )
+      
+          print("HTTP Status:", response.status_code)
+          print("Antwortgröße:", len(response.content))
+      
+          print("")
+          print("Antwort:")
+      
+          try:
+              data = response.json()
+              print(json.dumps(data, indent=2, ensure_ascii=False)[:10000])
+          except Exception:
+              print(response.text[:5000])
+      
+          if response.status_code != 200:
+              raise SystemExit("❌ FxTwitter-Test fehlgeschlagen")
+      
+          print("")
+          print("✅ FxTwitter antwortet")
+          PY
             git commit -m "Update Discord state"
             git push
           fi
