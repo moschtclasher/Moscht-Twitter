@@ -16,14 +16,12 @@ from pathlib import Path
 USERNAME = "moscht_coc"
 
 PROFILE_URL = f"https://x.com/{USERNAME}"
+
 FEED_FILE = "feed.xml"
-IMAGE_DIR = Path(f"images/{USERNAME}")
 
-# Wie viele Tweets vom Profil zunächst untersucht werden
-MAX_PROFILE_TWEETS = 5
+IMAGE_DIR = Path("images/moscht_coc")
 
-# Wie viele Tweets tatsächlich in den Feed kommen
-MAX_FEED_TWEETS = 3
+X_URL = f"https://x.com/{USERNAME}"
 
 
 # ==========================================================
@@ -52,10 +50,10 @@ HEADERS = {
 def get_profile_html():
 
     print("Abrufe X-Profil:")
-    print(PROFILE_URL)
+    print(X_URL)
 
     response = requests.get(
-        PROFILE_URL,
+        X_URL,
         headers=HEADERS,
         timeout=30,
     )
@@ -89,7 +87,8 @@ def extract_tweet_ids(profile_html):
         flags=re.IGNORECASE,
     )
 
-    # Doppelte IDs entfernen
+    # Doppelte IDs entfernen,
+    # Reihenfolge beibehalten
     ids = list(dict.fromkeys(ids))
 
     print(
@@ -101,678 +100,9 @@ def extract_tweet_ids(profile_html):
 
     return ids
 
-# ==========================================================
-# DEBUG: Alle "repost"-Vorkommen im Profil-HTML untersuchen
-# ==========================================================
-
-def debug_repost_context(profile_html):
-
-    # ======================================================
-    # DEBUG: Konkrete Repost-Hinweise im Profil-HTML suchen
-    # ======================================================
-    
-    print("")
-    print("=" * 60)
-    print("========== KONKRETER REPOST DEBUG ==========")
-    print("=" * 60)
-    
-    # Wir suchen NICHT mehr allgemein nach "repost",
-    # sondern nach Formulierungen/Strukturen, die tatsächlich
-    # auf einen Repost eines anderen Accounts hindeuten.
-    
-    repost_search_patterns = [
-        r"reposted",
-        r"repost von",
-        r"repost",
-        r"retweeted",
-        r"retweet",
-        r"reposted by",
-        r"retweeted by",
-        r"repost_of",
-        r"repost_of_tweet",
-        r"retweeted_tweet",
-        r"retweeted_tweet_result",
-        r"retweeted_status",
-        r"original_tweet",
-        r"source_tweet",
-        r"repost_source",
-    ]
-    
-    profile_lower = profile_html.lower()
-    
-    for pattern in repost_search_patterns:
-    
-        print("")
-        print("-" * 60)
-        print(f"SUCHMUSTER: {pattern}")
-        print("-" * 60)
-    
-        matches = list(
-            re.finditer(
-                pattern,
-                profile_lower,
-                flags=re.IGNORECASE,
-            )
-        )
-    
-        print(
-            f"Treffer: {len(matches)}"
-        )
-    
-        # Nur die ersten 10 Treffer untersuchen
-        for number, match in enumerate(matches[:10], 1):
-    
-            start = max(
-                0,
-                match.start() - 1000,
-            )
-    
-            end = min(
-                len(profile_html),
-                match.end() + 2000,
-            )
-    
-            context = profile_html[start:end]
-    
-            print("")
-            print(
-                f"========== TREFFER #{number} =========="
-            )
-    
-            print(context)
-    
-            # --------------------------------------------------
-            # IDs im Kontext
-            # --------------------------------------------------
-    
-            ids = re.findall(
-                r"\b\d{15,25}\b",
-                context,
-            )
-    
-            ids = list(
-                dict.fromkeys(ids)
-            )
-    
-            print("")
-            print("Gefundene mögliche IDs:")
-    
-            if ids:
-                for value in ids[:30]:
-                    print(
-                        "  ",
-                        value,
-                    )
-            else:
-                print(
-                    "   keine"
-                )
-    
-            # --------------------------------------------------
-            # Tweet-URLs
-            # --------------------------------------------------
-    
-            tweet_urls = re.findall(
-                r'https?://(?:www\.)?(?:x\.com|twitter\.com)/[^"\'<>\s]+/status/\d{15,25}',
-                context,
-                flags=re.IGNORECASE,
-            )
-    
-            tweet_urls = list(
-                dict.fromkeys(tweet_urls)
-            )
-    
-            print("")
-            print("Gefundene Tweet-URLs:")
-    
-            if tweet_urls:
-                for url in tweet_urls[:20]:
-                    print(
-                        "  ",
-                        url,
-                    )
-            else:
-                print(
-                    "   keine"
-                )
-    
-            # --------------------------------------------------
-            # screen_name / username
-            # --------------------------------------------------
-    
-            usernames = re.findall(
-                r'"screen_name"\s*:\s*"([^"]+)"',
-                context,
-                flags=re.IGNORECASE,
-            )
-    
-            usernames += re.findall(
-                r'"username"\s*:\s*"([^"]+)"',
-                context,
-                flags=re.IGNORECASE,
-            )
-    
-            usernames = list(
-                dict.fromkeys(usernames)
-            )
-    
-            print("")
-            print("Gefundene Usernamen:")
-    
-            if usernames:
-                for username in usernames[:30]:
-                    print(
-                        "  ",
-                        username,
-                    )
-            else:
-                print(
-                    "   keine"
-                )
-    
-    
-    print("")
-    print("=" * 60)
-    print("========== END KONKRETER REPOST DEBUG ==========")
-    print("=" * 60)
-    
-    # ==========================================================
-    # DEBUG: Repost-Strukturen im Profil untersuchen
-    # ==========================================================
-
-def debug_profile_reposts(profile_html, profile_tweet_ids):
-    """
-    Sucht die retweeted_status-Strukturen in der Profilantwort
-    und zeigt die darin enthaltenen Tweet-/User-Daten.
-
-    Diese Funktion verändert keine Daten und entscheidet auch
-    noch nicht, ob etwas tatsächlich ein Repost ist.
-    """
-
-    print("")
-    print("=" * 60)
-    print("========== REPOST DEBUG ==========")
-    print("=" * 60)
-
-    matches = list(
-        re.finditer(
-            r'"retweeted_status"',
-            profile_html,
-            flags=re.IGNORECASE,
-        )
-    )
-
-    print(
-        f'Gefundene "retweeted_status"-Strukturen: {len(matches)}'
-    )
-
-    if not matches:
-        print("Keine retweeted_status-Strukturen gefunden.")
-        print("=" * 60)
-        print("========== END REPOST DEBUG ==========")
-        return
-
-    for index, match in enumerate(matches, start=1):
-
-        # --------------------------------------------------
-        # Einen ausreichend großen Bereich um die Struktur
-        # herum betrachten.
-        # --------------------------------------------------
-
-        start = max(
-            0,
-            match.start() - 1500,
-        )
-
-        end = min(
-            len(profile_html),
-            match.end() + 8000,
-        )
-
-        block = profile_html[start:end]
-
-        print("")
-        print("-" * 60)
-        print(
-            f"REPOST-BLOCK #{index}"
-        )
-        print("-" * 60)
-
-        print(
-            "Blockgröße:",
-            len(block),
-        )
-
-        # --------------------------------------------------
-        # Alle 15-25-stelligen Zahlen/IDs suchen
-        # --------------------------------------------------
-
-        ids = re.findall(
-            r"\b\d{15,25}\b",
-            block,
-        )
-
-        ids = list(
-            dict.fromkeys(ids)
-        )
-
-        print("")
-        print("Tweet-/Objekt-IDs:")
-
-        for value in ids:
-
-            marker = ""
-
-            if value in profile_tweet_ids:
-                marker = " <-- PROFIL-TWEET"
-
-            print(
-                f"  {value}{marker}"
-            )
-
-        # --------------------------------------------------
-        # Usernames / screen_names
-        # --------------------------------------------------
-
-        usernames = re.findall(
-            r'"screen_name"\s*:\s*"([^"]+)"',
-            block,
-            flags=re.IGNORECASE,
-        )
-
-        usernames = list(
-            dict.fromkeys(usernames)
-        )
-
-        print("")
-        print("screen_name:")
-
-        if usernames:
-
-            for username in usernames:
-                print(
-                    "  @",
-                    username,
-                    sep="",
-                )
-
-        else:
-
-            print(
-                "  keine gefunden"
-            )
-
-        # --------------------------------------------------
-        # Relevante Struktur-Schlüssel
-        # --------------------------------------------------
-
-        structure_patterns = [
-            r'"retweeted_status"',
-            r'"retweeted_status_result"',
-            r'"quoted_tweet"',
-            r'"quoted_status"',
-            r'"rest_id"\s*:',
-            r'"legacy"\s*:',
-            r'"full_text"\s*:',
-            r'"user_results"\s*:',
-            r'"core"\s*:',
-            r'"result"\s*:',
-            r'"user"\s*:',
-        ]
-
-        print("")
-        print("Struktur-Hinweise:")
-
-        for pattern in structure_patterns:
-
-            count = len(
-                re.findall(
-                    pattern,
-                    block,
-                    flags=re.IGNORECASE,
-                )
-            )
-
-            if count:
-
-                print(
-                    f"  {pattern}: {count}"
-                )
-
-        # --------------------------------------------------
-        # Nach sichtbaren Repost-Hinweisen suchen
-        # --------------------------------------------------
-
-        text_patterns = [
-            r'repost',
-            r'retweet',
-            r'reposted',
-            r'reposted_by',
-            r'retweeted_by',
-            r'original',
-        ]
-
-        print("")
-        print("Text-/Repost-Hinweise:")
-
-        found_text_hint = False
-
-        for pattern in text_patterns:
-
-            matches_text = re.findall(
-                pattern,
-                block,
-                flags=re.IGNORECASE,
-            )
-
-            if matches_text:
-
-                found_text_hint = True
-
-                print(
-                    f'  "{pattern}": '
-                    f'{len(matches_text)} Treffer'
-                )
-
-        if not found_text_hint:
-
-            print(
-                "  keine zusätzlichen Hinweise"
-            )
-
-        # --------------------------------------------------
-        # Ausschnitt mit retweeted_status ausgeben
-        # --------------------------------------------------
-
-        context_start = max(
-            0,
-            match.start() - 500,
-        )
-
-        context_end = min(
-            len(profile_html),
-            match.end() + 3000,
-        )
-
-        context = profile_html[
-            context_start:context_end
-        ]
-
-        print("")
-        print("HTML-Ausschnitt:")
-        print("-" * 60)
-
-        print(context)
-
-        print("-" * 60)
-
-    print("")
-    print("=" * 60)
-    print("========== END REPOST DEBUG ==========")
-    print("=" * 60)
 
 # ==========================================================
-# Tweet-Typen aus Profil-HTML bestimmen
-# ==========================================================
-
-def detect_profile_tweet_types(profile_html, tweet_ids):
-    """
-    Versucht, die Tweet-Typen anhand der X-Strukturen
-    im Profil-HTML zu bestimmen.
-
-    Wichtig:
-    Ein Treffer von 'retweeted_status' irgendwo im
-    Profil-HTML wird NICHT automatisch einem Tweet
-    zugeordnet.
-
-    Deshalb wird nur dann ein Typ gesetzt, wenn eine
-    Tweet-ID in einem ausreichend kleinen JSON-Kontext
-    zusammen mit eindeutigen Quote-/Retweet-Strukturen
-    gefunden wird.
-    """
-
-    result = {
-        tweet_id: "original"
-        for tweet_id in tweet_ids
-    }
-
-    print("")
-    print("========== PROFIL TWEET TYPEN ==========")
-
-    # ------------------------------------------------------
-    # Für jeden bekannten Profil-Tweet suchen wir seinen
-    # direkten Kontext im HTML.
-    # ------------------------------------------------------
-
-    for tweet_id in tweet_ids:
-
-        positions = [
-            match.start()
-            for match in re.finditer(
-                re.escape(tweet_id),
-                profile_html,
-            )
-        ]
-
-        detected = "original"
-
-        for position in positions:
-
-            # Nicht den gesamten Profil-HTML-Bereich nehmen.
-            # Ein kleiner Kontext verhindert möglichst,
-            # dass benachbarte Tweets vermischt werden.
-            start = max(
-                0,
-                position - 5000,
-            )
-
-            end = min(
-                len(profile_html),
-                position + 5000,
-            )
-
-            context = profile_html[
-                start:end
-            ]
-
-            # --------------------------------------------------
-            # Quote
-            # --------------------------------------------------
-
-            quote_patterns = [
-                r'"quoted_tweet"\s*:',
-                r'"quoted_tweet_result"\s*:',
-                r'"quoted_status"\s*:',
-                r'"quoted_status_result"\s*:',
-                r'"is_quote_status"\s*:\s*true',
-            ]
-
-            if any(
-                re.search(
-                    pattern,
-                    context,
-                    flags=re.IGNORECASE,
-                )
-                for pattern in quote_patterns
-            ):
-
-                detected = "quote"
-                break
-
-            # --------------------------------------------------
-            # Repost
-            # --------------------------------------------------
-
-            repost_patterns = [
-                r'"retweeted_status"\s*:',
-                r'"retweeted_status_result"\s*:',
-                r'"retweeted_status_id_str"\s*:',
-                r'"retweeted_status_id"\s*:',
-            ]
-
-            if any(
-                re.search(
-                    pattern,
-                    context,
-                    flags=re.IGNORECASE,
-                )
-                for pattern in repost_patterns
-            ):
-
-                detected = "repost"
-                break
-
-        result[tweet_id] = detected
-
-        print(
-            f"Profil-Typ {tweet_id}: {detected}"
-        )
-
-    print(
-        "========== END PROFIL TWEET TYPEN =========="
-    )
-
-    return result
-
-# ==========================================================
-# Tweet-Typ erkennen
-# ==========================================================
-
-def detect_tweet_type(tweet_html, tweet_id):
-    """
-    Erkennt den Tweet-Typ anhand eindeutig vorhandener
-    Strukturen im HTML der einzelnen Tweet-Seite.
-
-    Wenn keine eindeutige Struktur vorhanden ist,
-    wird der Tweet als original behandelt.
-    """
-
-    print("")
-    print("========== X-TWEET DEBUG ==========")
-
-    # ------------------------------------------------------
-    # HTML normalisieren
-    # ------------------------------------------------------
-
-    html_lower = tweet_html.lower()
-
-    # ------------------------------------------------------
-    # Debug
-    # ------------------------------------------------------
-
-    debug_patterns = [
-        r'"retweeted_status_id_str"\s*:\s*"([^"]+)"',
-        r'"retweeted_status_id"\s*:\s*"([^"]+)"',
-        r'"quoted_status_id_str"\s*:\s*"([^"]+)"',
-        r'"quoted_status_id"\s*:\s*"([^"]+)"',
-        r'"is_quote_status"\s*:\s*(true|false)',
-        r'"quoted_status"\s*:',
-        r'"quoted_status_result"\s*:',
-        r'"quoted_tweet"\s*:',
-        r'"retweeted_status"\s*:',
-        r'"retweeted_status_result"\s*:',
-    ]
-
-    for pattern in debug_patterns:
-
-        matches = re.findall(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        )
-
-        if matches:
-
-            print(
-                f"DEBUG {pattern}:"
-            )
-
-            for match in matches[:10]:
-                print(
-                    "  ",
-                    match,
-                )
-
-    print("========== END DEBUG ==========")
-
-    # ------------------------------------------------------
-    # Quote Tweet
-    # ------------------------------------------------------
-
-    quote_patterns = [
-        r'"quoted_status"\s*:',
-        r'"quoted_status_result"\s*:',
-        r'"quoted_tweet"\s*:',
-        r'"is_quote_status"\s*:\s*true',
-    ]
-
-    for pattern in quote_patterns:
-
-        if re.search(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        ):
-
-            print(
-                "Typ: quote"
-            )
-
-            print(
-                "Erkennung:",
-                pattern,
-            )
-
-            return "quote"
-
-    # ------------------------------------------------------
-    # Retweet
-    # ------------------------------------------------------
-
-    repost_patterns = [
-        r'"retweeted_status"\s*:',
-        r'"retweeted_status_result"\s*:',
-        r'"retweeted_status_id_str"\s*:',
-        r'"retweeted_status_id"\s*:',
-    ]
-
-    for pattern in repost_patterns:
-
-        if re.search(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        ):
-
-            print(
-                "Typ: repost"
-            )
-
-            print(
-                "Erkennung:",
-                pattern,
-            )
-
-            return "repost"
-
-    # ------------------------------------------------------
-    # Original
-    # ------------------------------------------------------
-
-    print(
-        "Typ: original"
-    )
-
-    print(
-        "Erkennung: keine eindeutige "
-        "Repost-/Quote-Struktur gefunden"
-    )
-
-    return "original"
-
-
-# ==========================================================
-# Tweet-Daten aus HTML
+# Einzelnen Tweet abrufen
 # ==========================================================
 
 def get_tweet(tweet_id):
@@ -800,73 +130,21 @@ def get_tweet(tweet_id):
 
     return response.text
 
-def extract_tweet_data(
-    tweet_html,
-    tweet_id,
-    detected_type=None,
-):
 
-    # ------------------------------------------------------
-    # Tweet-Typ
-    # ------------------------------------------------------
+# ==========================================================
+# Tweet Daten aus HTML
+# ==========================================================
 
-    if detected_type is not None:
-    
-        tweet_type = detected_type
-    
-    else:
-    
-        tweet_type = detect_tweet_type(
-            tweet_html,
-            tweet_id,
-        )
+def extract_tweet_data(tweet_html, tweet_id):
+    """Extrahiert Text, Datum und Bilder aus dem HTML eines Tweets."""
 
     # ------------------------------------------------------
     # Text
     # ------------------------------------------------------
-    # ------------------------------------------------------
-    # DEBUG: Relevante X-Strukturen anzeigen
-    # ------------------------------------------------------
-
-    print("")
-    print("========== X-TWEET DEBUG ==========")
-
-    debug_patterns = [
-        r'"retweeted_status_id_str":"([^"]+)"',
-        r'"retweeted_status_id":"([^"]+)"',
-        r'"quoted_status_id_str":"([^"]+)"',
-        r'"quoted_status_id":"([^"]+)"',
-        r'"is_quote_status":(true|false)',
-        r'"retweeted":(true|false)',
-        r'"legacy":\{',
-        r'"quoted_status":\{',
-        r'"retweeted_status":\{',
-        r'"full_text":"([^"]{1,200})"',
-    ]
-
-    for pattern in debug_patterns:
-        matches = re.findall(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        )
-
-        if matches:
-            print(
-                f"DEBUG {pattern}:"
-            )
-
-            for match in matches[:10]:
-                print(
-                    "  ",
-                    match,
-                )
-
-    print("========== END DEBUG ==========")
-
-    
     text = ""
 
+    # X stellt den Tweet-Text auf der öffentlichen Seite meist
+    # über og:description bzw. twitter:description bereit.
     text_patterns = [
         r'<meta[^>]+property="og:description"[^>]+content="([^"]*)"',
         r'<meta[^>]+name="twitter:description"[^>]+content="([^"]*)"',
@@ -874,86 +152,52 @@ def extract_tweet_data(
     ]
 
     for pattern in text_patterns:
-
-        match = re.search(
-            pattern,
-            tweet_html,
-            flags=re.IGNORECASE,
-        )
-
+        match = re.search(pattern, tweet_html, flags=re.IGNORECASE)
         if match:
-
-            text = html.unescape(
-                match.group(1)
-            ).strip()
-
+            text = html.unescape(match.group(1)).strip()
             if text:
                 break
 
-    # ------------------------------------------------------
-    # Falls Attribute andersherum stehen
-    # ------------------------------------------------------
-
+    # Falls das Attribut in anderer Reihenfolge vorkommt.
     if not text:
-
         reverse_patterns = [
             r'<meta[^>]+content="([^"]*)"[^>]+property="og:description"',
             r'<meta[^>]+content="([^"]*)"[^>]+name="twitter:description"',
         ]
-
         for pattern in reverse_patterns:
-
-            match = re.search(
-                pattern,
-                tweet_html,
-                flags=re.IGNORECASE,
-            )
-
+            match = re.search(pattern, tweet_html, flags=re.IGNORECASE)
             if match:
-
-                text = html.unescape(
-                    match.group(1)
-                ).strip()
-
+                text = html.unescape(match.group(1)).strip()
                 if text:
                     break
 
     # ------------------------------------------------------
     # t.co Links auflösen
     # ------------------------------------------------------
-
     tco_links = re.findall(
         r"https://t\.co/[A-Za-z0-9]+",
         text,
     )
 
     for tco_url in tco_links:
-
         try:
-
             response = requests.get(
                 tco_url,
                 headers=HEADERS,
                 timeout=15,
                 allow_redirects=True,
             )
-
             final_url = response.url
 
             if final_url and final_url != tco_url:
-
-                text = text.replace(
-                    tco_url,
-                    final_url,
-                )
+                text = text.replace(tco_url, final_url)
 
         except requests.RequestException:
             pass
 
     # ------------------------------------------------------
-    # Bilder
+    # Bilder aus dem X-HTML ermitteln
     # ------------------------------------------------------
-
     image_urls = re.findall(
         r'https://pbs\.twimg\.com/media/[^"\'&<> ]+',
         tweet_html,
@@ -964,17 +208,11 @@ def extract_tweet_data(
     seen_media_ids = set()
 
     for image_url in image_urls:
-
         if not image_url:
             continue
 
-        image_url = html.unescape(
-            image_url
-        )
-
-        image_url = image_url.rstrip(
-            ".,!?)]}"
-        )
+        image_url = html.unescape(image_url)
+        image_url = image_url.rstrip(".,!?)]}")
 
         match = re.search(
             r"/media/([^/?]+)",
@@ -990,23 +228,19 @@ def extract_tweet_data(
         if media_id in seen_media_ids:
             continue
 
-        seen_media_ids.add(
-            media_id
-        )
+        seen_media_ids.add(media_id)
 
+        # Immer Originalqualität anfordern.
         image_url = (
-            "https://pbs.twimg.com/media/"
+            f"https://pbs.twimg.com/media/"
             f"{media_id}?name=orig"
         )
 
-        clean_images.append(
-            image_url
-        )
+        clean_images.append(image_url)
 
     # ------------------------------------------------------
     # Datum
     # ------------------------------------------------------
-
     created_at = None
 
     date_patterns = [
@@ -1015,7 +249,6 @@ def extract_tweet_data(
     ]
 
     for pattern in date_patterns:
-
         match = re.search(
             pattern,
             tweet_html,
@@ -1023,72 +256,34 @@ def extract_tweet_data(
         )
 
         if match:
-
-            value = html.unescape(
-                match.group(1)
-            ).strip()
+            value = html.unescape(match.group(1)).strip()
 
             try:
-
                 created_at = datetime.fromisoformat(
-                    value.replace(
-                        "Z",
-                        "+00:00",
-                    )
+                    value.replace("Z", "+00:00")
                 )
-
                 break
-
             except ValueError:
                 pass
 
     if created_at is None:
-
-        created_at = datetime.now(
-            timezone.utc
-        )
+        created_at = datetime.now(timezone.utc)
 
     if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
 
-        created_at = created_at.replace(
-            tzinfo=timezone.utc
-        )
+    created_at = created_at.astimezone(timezone.utc)
 
-    created_at = created_at.astimezone(
-        timezone.utc
-    )
-
-    # ------------------------------------------------------
-    # Ausgabe
-    # ------------------------------------------------------
-
-    print(
-        "Typ:",
-        tweet_type,
-    )
-
-    print(
-        "Text:",
-        text[:150],
-    )
-
-    print(
-        "Bilder:",
-        len(clean_images),
-    )
+    print("Text:", text[:150])
+    print("Bilder:", len(clean_images))
 
     return {
         "id": tweet_id,
         "text": text,
         "created_at": created_at,
         "images": clean_images,
-        "type": tweet_type,
     }
 
-
-# ==========================================================
-# Bild herunterladen
-# ==========================================================
 
 def download_image(
     image_url,
@@ -1102,6 +297,7 @@ def download_image(
         exist_ok=True,
     )
 
+    # X liefert teilweise ?format=...
     base_url = image_url.split("?")[0]
 
     extension = Path(
@@ -1117,13 +313,10 @@ def download_image(
         extension = ".jpg"
 
     if index == 0:
-
         filename = (
             f"{tweet_id}{extension}"
         )
-
     else:
-
         filename = (
             f"{tweet_id}_{index}{extension}"
         )
@@ -1140,25 +333,22 @@ def download_image(
 
         response.raise_for_status()
 
+        # X kann dasselbe Bild mehrfach unter unterschiedlichen
+        # URLs/Formaten liefern. Deshalb zusätzlich den tatsächlichen
+        # Dateiinhalt prüfen.
         content_hash = hashlib.sha256(
             response.content
         ).hexdigest()
 
         if seen_hashes is not None:
-
             if content_hash in seen_hashes:
-
                 print(
                     "ℹ️ Doppeltes Bild erkannt, überspringe:"
                 )
-
                 print(image_url)
-
                 return None
 
-            seen_hashes.add(
-                content_hash
-            )
+            seen_hashes.add(content_hash)
 
         target.write_bytes(
             response.content
@@ -1175,10 +365,12 @@ def download_image(
     except requests.RequestException as e:
 
         print(
-            "❌ Bild konnte nicht geladen werden:"
+            f"❌ Bild konnte nicht geladen werden:"
         )
 
-        print(image_url)
+        print(
+            image_url
+        )
 
         print(e)
 
@@ -1201,10 +393,6 @@ def create_rss_item(
         "item",
     )
 
-    # ------------------------------------------------------
-    # Titel
-    # ------------------------------------------------------
-
     title = ET.SubElement(
         item,
         "title",
@@ -1216,20 +404,12 @@ def create_rss_item(
         tweet["text"],
     ).strip()[:300]
 
-    # ------------------------------------------------------
-    # Beschreibung
-    # ------------------------------------------------------
-
     description = ET.SubElement(
         item,
         "description",
     )
 
     description.text = tweet["text"]
-
-    # ------------------------------------------------------
-    # Link
-    # ------------------------------------------------------
 
     link = ET.SubElement(
         item,
@@ -1242,10 +422,6 @@ def create_rss_item(
         f"{tweet_id}"
     )
 
-    # ------------------------------------------------------
-    # GUID
-    # ------------------------------------------------------
-
     guid = ET.SubElement(
         item,
         "guid",
@@ -1255,10 +431,6 @@ def create_rss_item(
     )
 
     guid.text = tweet_id
-
-    # ------------------------------------------------------
-    # Datum
-    # ------------------------------------------------------
 
     pub_date = ET.SubElement(
         item,
@@ -1290,23 +462,22 @@ def create_rss_item(
         if image is None:
             continue
 
-        # Dynamischer GitHub-Pages-Pfad
         public_url = (
             "https://moschtclasher.github.io/"
             "Moscht-Twitter/"
-            f"{image.as_posix()}"
+            "images/moscht_coc/"
+            f"{image.name}"
         )
 
-        extension = image.suffix.lower()
+        extension = (
+            image.suffix.lower()
+        )
 
-        if extension == ".png":
-            mime_type = "image/png"
-
-        elif extension == ".webp":
-            mime_type = "image/webp"
-
-        else:
-            mime_type = "image/jpeg"
+        mime_type = (
+            "image/png"
+            if extension == ".png"
+            else "image/jpeg"
+        )
 
         ET.SubElement(
             item,
@@ -1415,7 +586,6 @@ def create_feed(tweets):
     )
 
     print("")
-
     print(
         f"✅ Feed gespeichert: "
         f"{FEED_FILE}"
@@ -1429,304 +599,79 @@ def create_feed(tweets):
 def main():
 
     print("=" * 60)
-
     print(
         f"X Direkt Feed für @{USERNAME}"
     )
-
     print("=" * 60)
-
-    # ------------------------------------------------------
-    # Profil abrufen
-    # ------------------------------------------------------
 
     profile_html = get_profile_html()
-    # ======================================================
-    # DEBUG: Konkrete Repost-Hinweise im Profil-HTML suchen
-    # ======================================================
-    
-    print("")
-    print("=" * 60)
-    print("========== KONKRETER REPOST DEBUG ==========")
-    print("=" * 60)
-    
-    # Wir suchen NICHT mehr allgemein nach "repost",
-    # sondern nach Formulierungen/Strukturen, die tatsächlich
-    # auf einen Repost eines anderen Accounts hindeuten.
-    
-    repost_search_patterns = [
-        r"reposted",
-        r"repost von",
-        r"repost",
-        r"retweeted",
-        r"retweet",
-        r"reposted by",
-        r"retweeted by",
-        r"repost_of",
-        r"repost_of_tweet",
-        r"retweeted_tweet",
-        r"retweeted_tweet_result",
-        r"retweeted_status",
-        r"original_tweet",
-        r"source_tweet",
-        r"repost_source",
-    ]
-    
-    profile_lower = profile_html.lower()
-    
-    for pattern in repost_search_patterns:
-    
-        print("")
-        print("-" * 60)
-        print(f"SUCHMUSTER: {pattern}")
-        print("-" * 60)
-    
-        matches = list(
-            re.finditer(
-                pattern,
-                profile_lower,
-                flags=re.IGNORECASE,
-            )
-        )
-    
-        print(
-            f"Treffer: {len(matches)}"
-        )
-    
-        # Nur die ersten 10 Treffer untersuchen
-        for number, match in enumerate(matches[:10], 1):
-    
-            start = max(
-                0,
-                match.start() - 1000,
-            )
-    
-            end = min(
-                len(profile_html),
-                match.end() + 2000,
-            )
-    
-            context = profile_html[start:end]
-    
-            print("")
-            print(
-                f"========== TREFFER #{number} =========="
-            )
-    
-            print(context)
-    
-            # --------------------------------------------------
-            # IDs im Kontext
-            # --------------------------------------------------
-    
-            ids = re.findall(
-                r"\b\d{15,25}\b",
-                context,
-            )
-    
-            ids = list(
-                dict.fromkeys(ids)
-            )
-    
-            print("")
-            print("Gefundene mögliche IDs:")
-    
-            if ids:
-                for value in ids[:30]:
-                    print(
-                        "  ",
-                        value,
-                    )
-            else:
-                print(
-                    "   keine"
-                )
-    
-            # --------------------------------------------------
-            # Tweet-URLs
-            # --------------------------------------------------
-    
-            tweet_urls = re.findall(
-                r'https?://(?:www\.)?(?:x\.com|twitter\.com)/[^"\'<>\s]+/status/\d{15,25}',
-                context,
-                flags=re.IGNORECASE,
-            )
-    
-            tweet_urls = list(
-                dict.fromkeys(tweet_urls)
-            )
-    
-            print("")
-            print("Gefundene Tweet-URLs:")
-    
-            if tweet_urls:
-                for url in tweet_urls[:20]:
-                    print(
-                        "  ",
-                        url,
-                    )
-            else:
-                print(
-                    "   keine"
-                )
-    
-            # --------------------------------------------------
-            # screen_name / username
-            # --------------------------------------------------
-    
-            usernames = re.findall(
-                r'"screen_name"\s*:\s*"([^"]+)"',
-                context,
-                flags=re.IGNORECASE,
-            )
-    
-            usernames += re.findall(
-                r'"username"\s*:\s*"([^"]+)"',
-                context,
-                flags=re.IGNORECASE,
-            )
-    
-            usernames = list(
-                dict.fromkeys(usernames)
-            )
-    
-            print("")
-            print("Gefundene Usernamen:")
-    
-            if usernames:
-                for username in usernames[:30]:
-                    print(
-                        "  ",
-                        username,
-                    )
-            else:
-                print(
-                    "   keine"
-                )
-    
-    
-    print("")
-    print("=" * 60)
-    print("========== END KONKRETER REPOST DEBUG ==========")
-    print("=" * 60)
 
-    
     tweet_ids = extract_tweet_ids(
         profile_html
     )
 
-    debug_repost_context(
-        profile_html
-    )
-    debug_profile_reposts(
-        profile_html,
-        tweet_ids,
-    )
-    
-    if not tweet_ids:
-    
-        raise RuntimeError(
-            "Keine Tweet-IDs gefunden."
-        )
-    
-    profile_tweet_types = detect_profile_tweet_types(
-        profile_html,
-        tweet_ids,
-    )
-   
-    
-    
     if not tweet_ids:
 
         raise RuntimeError(
             "Keine Tweet-IDs gefunden."
         )
-
-    # ------------------------------------------------------
-    # Tweets untersuchen
-    # ------------------------------------------------------
 
     tweets = []
-
-    for tweet_id in tweet_ids[
-        :MAX_PROFILE_TWEETS
-    ]:
-
+    
+    # Mehr Tweets prüfen, da X einen angepinnten Tweet
+    # vor die eigentlichen neuesten Tweets setzen kann.
+    for tweet_id in tweet_ids[:5]:
+    
         try:
-
+    
             tweet_html = get_tweet(
                 tweet_id
             )
-
+    
             tweet = extract_tweet_data(
                 tweet_html,
                 tweet_id,
-                detected_type=profile_tweet_types.get(
-                    tweet_id,
-                    "original",
-                ),
             )
-
-            tweets.append(
-                tweet
-            )
-
+    
+            tweets.append(tweet)
+    
         except Exception as e:
-
+    
             print(
                 f"❌ Tweet {tweet_id} "
                 f"konnte nicht verarbeitet werden:"
             )
-
+    
             print(e)
+    
+    
+    # Nach tatsächlichem Veröffentlichungsdatum sortieren.
+    tweets.sort(
+        key=lambda tweet: tweet["created_at"],
+        reverse=True,
+    )
+    
+    
+    # Nur die 3 neuesten Tweets verwenden.
+    tweets = tweets[:3]
+    
+    print("")
+    print(
+        f"Verwende die {len(tweets)} neuesten Tweets:"
+    )
+    
+    for tweet in tweets:
+    
+        print(
+            f" - {tweet['id']} | "
+            f"{format_datetime(tweet['created_at'], usegmt=True)}"
+        )
 
     if not tweets:
 
         raise RuntimeError(
             "Keine Tweets konnten verarbeitet werden."
         )
-
-    # ------------------------------------------------------
-    # Nach Datum sortieren
-    # ------------------------------------------------------
-
-    tweets.sort(
-        key=lambda tweet: tweet["created_at"],
-        reverse=True,
-    )
-
-    # ------------------------------------------------------
-    # Nur die gewünschten neuesten Tweets
-    # ------------------------------------------------------
-
-    tweets = tweets[
-        :MAX_FEED_TWEETS
-    ]
-
-    print("")
-
-    print(
-        f"Verwende die {len(tweets)} "
-        f"neuesten Tweets:"
-    )
-
-    for tweet in tweets:
-
-        print(
-            " -",
-            tweet["id"],
-            "|",
-            format_datetime(
-                tweet["created_at"],
-                usegmt=True,
-            ),
-            "|",
-            tweet["type"],
-        )
-
-    # ------------------------------------------------------
-    # Feed erstellen
-    # ------------------------------------------------------
 
     create_feed(
         tweets
