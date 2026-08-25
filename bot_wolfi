@@ -465,7 +465,7 @@ def create_rss_item(
         public_url = (
             "https://moschtclasher.github.io/"
             "Moscht-Twitter/"
-            "images/twitch_lurmii/"
+            "images/wolfi/"
             f"{image.name}"
         )
 
