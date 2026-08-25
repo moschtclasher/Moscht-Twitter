@@ -16,12 +16,14 @@ from pathlib import Path
 USERNAME = "moscht_coc"
 
 PROFILE_URL = f"https://x.com/{USERNAME}"
-
 FEED_FILE = "feed.xml"
+IMAGE_DIR = Path(f"images/{USERNAME}")
 
-IMAGE_DIR = Path("images/moscht_coc")
+# Wie viele Tweets vom Profil zunächst untersucht werden
+MAX_PROFILE_TWEETS = 5
 
-X_URL = f"https://x.com/{USERNAME}"
+# Wie viele Tweets tatsächlich in den Feed kommen
+MAX_FEED_TWEETS = 3
 
 
 # ==========================================================
@@ -50,10 +52,10 @@ HEADERS = {
 def get_profile_html():
 
     print("Abrufe X-Profil:")
-    print(X_URL)
+    print(PROFILE_URL)
 
     response = requests.get(
-        X_URL,
+        PROFILE_URL,
         headers=HEADERS,
         timeout=30,
     )
@@ -88,7 +90,7 @@ def extract_tweet_ids(profile_html):
     )
 
     # Doppelte IDs entfernen,
-    # Reihenfolge beibehalten
+    # Reihenfolge aus dem HTML beibehalten
     ids = list(dict.fromkeys(ids))
 
     print(
@@ -102,7 +104,7 @@ def extract_tweet_ids(profile_html):
 
 
 # ==========================================================
-# Einzelnen Tweet abrufen
+# Tweet abrufen
 # ==========================================================
 
 def get_tweet(tweet_id):
@@ -132,26 +134,149 @@ def get_tweet(tweet_id):
 
 
 # ==========================================================
-# Tweet Daten aus HTML
+# Tweet-Typ erkennen
+# ==========================================================
+
+def detect_tweet_type(tweet_html):
+
+    """
+    Versucht anhand verschiedener Hinweise im X-HTML
+    zwischen Original, Repost und Quote-Repost zu unterscheiden.
+
+    Wichtig:
+    X verändert die HTML-Struktur gelegentlich.
+    Deshalb werden mehrere unterschiedliche Hinweise geprüft.
+    """
+
+    lower_html = tweet_html.lower()
+
+    # ------------------------------------------------------
+    # Diagnose: relevante Begriffe
+    # ------------------------------------------------------
+
+    repost_keywords = [
+        "retweeted",
+        "reposted",
+        "retweet",
+        "repost",
+    ]
+
+    quote_keywords = [
+        "quote",
+        "quoted",
+        "quote tweet",
+        "quoted_status",
+    ]
+
+    repost_hits = [
+        keyword
+        for keyword in repost_keywords
+        if keyword in lower_html
+    ]
+
+    quote_hits = [
+        keyword
+        for keyword in quote_keywords
+        if keyword in lower_html
+    ]
+
+    # ------------------------------------------------------
+    # Strukturierte Daten untersuchen
+    # ------------------------------------------------------
+
+    structured_repost = False
+    structured_quote = False
+
+    structured_patterns_repost = [
+        r'"retweeted_status"',
+        r'"retweeted_status_result"',
+        r'"repost"',
+        r'"is_retweet"\s*:\s*true',
+        r'"retweeted"\s*:\s*true',
+    ]
+
+    structured_patterns_quote = [
+        r'"quoted_status"',
+        r'"quoted_status_result"',
+        r'"quote_status"',
+        r'"is_quote_status"\s*:\s*true',
+        r'"quoted"\s*:\s*true',
+    ]
+
+    for pattern in structured_patterns_repost:
+        if re.search(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
+        ):
+            structured_repost = True
+            break
+
+    for pattern in structured_patterns_quote:
+        if re.search(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
+        ):
+            structured_quote = True
+            break
+
+    # ------------------------------------------------------
+    # Ergebnis
+    # ------------------------------------------------------
+
+    if structured_quote:
+        tweet_type = "quote"
+
+    elif structured_repost:
+        tweet_type = "repost"
+
+    elif repost_hits and not quote_hits:
+        tweet_type = "repost"
+
+    elif quote_hits:
+        tweet_type = "quote"
+
+    else:
+        tweet_type = "original"
+
+    # ------------------------------------------------------
+    # Diagnose ausgeben
+    # ------------------------------------------------------
+
+    print("Typ:", tweet_type)
+
+    print(
+        "Diagnose:",
+        f"Repost-Hinweise={repost_hits or '-'}, "
+        f"Quote-Hinweise={quote_hits or '-'}, "
+        f"strukturierter Repost={structured_repost}, "
+        f"strukturierter Quote={structured_quote}",
+    )
+
+    return tweet_type
+
+
+# ==========================================================
+# Tweet-Daten aus HTML
 # ==========================================================
 
 def extract_tweet_data(tweet_html, tweet_id):
-    """Extrahiert Text, Datum und Bilder aus dem HTML eines Tweets."""
-
-    # ------------------------------------------------------
-    # Text
-    # ------------------------------------------------------
-    text = ""
 
     # ------------------------------------------------------
     # Tweet-Typ
     # ------------------------------------------------------
-    tweet_type = "original"
-    
-    print("Typ:", tweet_type)
 
-    # X stellt den Tweet-Text auf der öffentlichen Seite meist
-    # über og:description bzw. twitter:description bereit.
+    tweet_type = detect_tweet_type(
+        tweet_html
+    )
+
+    # ------------------------------------------------------
+    # Text
+    # ------------------------------------------------------
+
+    text = ""
+
     text_patterns = [
         r'<meta[^>]+property="og:description"[^>]+content="([^"]*)"',
         r'<meta[^>]+name="twitter:description"[^>]+content="([^"]*)"',
@@ -159,52 +284,86 @@ def extract_tweet_data(tweet_html, tweet_id):
     ]
 
     for pattern in text_patterns:
-        match = re.search(pattern, tweet_html, flags=re.IGNORECASE)
+
+        match = re.search(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
+        )
+
         if match:
-            text = html.unescape(match.group(1)).strip()
+
+            text = html.unescape(
+                match.group(1)
+            ).strip()
+
             if text:
                 break
 
-    # Falls das Attribut in anderer Reihenfolge vorkommt.
+    # ------------------------------------------------------
+    # Falls Attribute andersherum stehen
+    # ------------------------------------------------------
+
     if not text:
+
         reverse_patterns = [
             r'<meta[^>]+content="([^"]*)"[^>]+property="og:description"',
             r'<meta[^>]+content="([^"]*)"[^>]+name="twitter:description"',
         ]
+
         for pattern in reverse_patterns:
-            match = re.search(pattern, tweet_html, flags=re.IGNORECASE)
+
+            match = re.search(
+                pattern,
+                tweet_html,
+                flags=re.IGNORECASE,
+            )
+
             if match:
-                text = html.unescape(match.group(1)).strip()
+
+                text = html.unescape(
+                    match.group(1)
+                ).strip()
+
                 if text:
                     break
 
     # ------------------------------------------------------
     # t.co Links auflösen
     # ------------------------------------------------------
+
     tco_links = re.findall(
         r"https://t\.co/[A-Za-z0-9]+",
         text,
     )
 
     for tco_url in tco_links:
+
         try:
+
             response = requests.get(
                 tco_url,
                 headers=HEADERS,
                 timeout=15,
                 allow_redirects=True,
             )
+
             final_url = response.url
 
             if final_url and final_url != tco_url:
-                text = text.replace(tco_url, final_url)
+
+                text = text.replace(
+                    tco_url,
+                    final_url,
+                )
 
         except requests.RequestException:
             pass
 
     # ------------------------------------------------------
-    # Bilder aus dem X-HTML ermitteln
+    # Bilder
     # ------------------------------------------------------
+
     image_urls = re.findall(
         r'https://pbs\.twimg\.com/media/[^"\'&<> ]+',
         tweet_html,
@@ -215,11 +374,17 @@ def extract_tweet_data(tweet_html, tweet_id):
     seen_media_ids = set()
 
     for image_url in image_urls:
+
         if not image_url:
             continue
 
-        image_url = html.unescape(image_url)
-        image_url = image_url.rstrip(".,!?)]}")
+        image_url = html.unescape(
+            image_url
+        )
+
+        image_url = image_url.rstrip(
+            ".,!?)]}"
+        )
 
         match = re.search(
             r"/media/([^/?]+)",
@@ -235,19 +400,23 @@ def extract_tweet_data(tweet_html, tweet_id):
         if media_id in seen_media_ids:
             continue
 
-        seen_media_ids.add(media_id)
+        seen_media_ids.add(
+            media_id
+        )
 
-        # Immer Originalqualität anfordern.
         image_url = (
-            f"https://pbs.twimg.com/media/"
+            "https://pbs.twimg.com/media/"
             f"{media_id}?name=orig"
         )
 
-        clean_images.append(image_url)
+        clean_images.append(
+            image_url
+        )
 
     # ------------------------------------------------------
     # Datum
     # ------------------------------------------------------
+
     created_at = None
 
     date_patterns = [
@@ -256,6 +425,7 @@ def extract_tweet_data(tweet_html, tweet_id):
     ]
 
     for pattern in date_patterns:
+
         match = re.search(
             pattern,
             tweet_html,
@@ -263,26 +433,59 @@ def extract_tweet_data(tweet_html, tweet_id):
         )
 
         if match:
-            value = html.unescape(match.group(1)).strip()
+
+            value = html.unescape(
+                match.group(1)
+            ).strip()
 
             try:
+
                 created_at = datetime.fromisoformat(
-                    value.replace("Z", "+00:00")
+                    value.replace(
+                        "Z",
+                        "+00:00",
+                    )
                 )
+
                 break
+
             except ValueError:
                 pass
 
     if created_at is None:
-        created_at = datetime.now(timezone.utc)
+
+        created_at = datetime.now(
+            timezone.utc
+        )
 
     if created_at.tzinfo is None:
-        created_at = created_at.replace(tzinfo=timezone.utc)
 
-    created_at = created_at.astimezone(timezone.utc)
+        created_at = created_at.replace(
+            tzinfo=timezone.utc
+        )
 
-    print("Text:", text[:150])
-    print("Bilder:", len(clean_images))
+    created_at = created_at.astimezone(
+        timezone.utc
+    )
+
+    # ------------------------------------------------------
+    # Ausgabe
+    # ------------------------------------------------------
+
+    print(
+        "Typ:",
+        tweet_type,
+    )
+
+    print(
+        "Text:",
+        text[:150],
+    )
+
+    print(
+        "Bilder:",
+        len(clean_images),
+    )
 
     return {
         "id": tweet_id,
@@ -292,6 +495,10 @@ def extract_tweet_data(tweet_html, tweet_id):
         "type": tweet_type,
     }
 
+
+# ==========================================================
+# Bild herunterladen
+# ==========================================================
 
 def download_image(
     image_url,
@@ -305,7 +512,6 @@ def download_image(
         exist_ok=True,
     )
 
-    # X liefert teilweise ?format=...
     base_url = image_url.split("?")[0]
 
     extension = Path(
@@ -321,10 +527,13 @@ def download_image(
         extension = ".jpg"
 
     if index == 0:
+
         filename = (
             f"{tweet_id}{extension}"
         )
+
     else:
+
         filename = (
             f"{tweet_id}_{index}{extension}"
         )
@@ -341,22 +550,25 @@ def download_image(
 
         response.raise_for_status()
 
-        # X kann dasselbe Bild mehrfach unter unterschiedlichen
-        # URLs/Formaten liefern. Deshalb zusätzlich den tatsächlichen
-        # Dateiinhalt prüfen.
         content_hash = hashlib.sha256(
             response.content
         ).hexdigest()
 
         if seen_hashes is not None:
+
             if content_hash in seen_hashes:
+
                 print(
                     "ℹ️ Doppeltes Bild erkannt, überspringe:"
                 )
+
                 print(image_url)
+
                 return None
 
-            seen_hashes.add(content_hash)
+            seen_hashes.add(
+                content_hash
+            )
 
         target.write_bytes(
             response.content
@@ -373,12 +585,10 @@ def download_image(
     except requests.RequestException as e:
 
         print(
-            f"❌ Bild konnte nicht geladen werden:"
+            "❌ Bild konnte nicht geladen werden:"
         )
 
-        print(
-            image_url
-        )
+        print(image_url)
 
         print(e)
 
@@ -401,6 +611,10 @@ def create_rss_item(
         "item",
     )
 
+    # ------------------------------------------------------
+    # Titel
+    # ------------------------------------------------------
+
     title = ET.SubElement(
         item,
         "title",
@@ -412,12 +626,20 @@ def create_rss_item(
         tweet["text"],
     ).strip()[:300]
 
+    # ------------------------------------------------------
+    # Beschreibung
+    # ------------------------------------------------------
+
     description = ET.SubElement(
         item,
         "description",
     )
 
     description.text = tweet["text"]
+
+    # ------------------------------------------------------
+    # Link
+    # ------------------------------------------------------
 
     link = ET.SubElement(
         item,
@@ -430,6 +652,10 @@ def create_rss_item(
         f"{tweet_id}"
     )
 
+    # ------------------------------------------------------
+    # GUID
+    # ------------------------------------------------------
+
     guid = ET.SubElement(
         item,
         "guid",
@@ -439,6 +665,10 @@ def create_rss_item(
     )
 
     guid.text = tweet_id
+
+    # ------------------------------------------------------
+    # Datum
+    # ------------------------------------------------------
 
     pub_date = ET.SubElement(
         item,
@@ -470,22 +700,23 @@ def create_rss_item(
         if image is None:
             continue
 
+        # Dynamischer GitHub-Pages-Pfad
         public_url = (
             "https://moschtclasher.github.io/"
             "Moscht-Twitter/"
-            "images/moscht_coc/"
-            f"{image.name}"
+            f"{image.as_posix()}"
         )
 
-        extension = (
-            image.suffix.lower()
-        )
+        extension = image.suffix.lower()
 
-        mime_type = (
-            "image/png"
-            if extension == ".png"
-            else "image/jpeg"
-        )
+        if extension == ".png":
+            mime_type = "image/png"
+
+        elif extension == ".webp":
+            mime_type = "image/webp"
+
+        else:
+            mime_type = "image/jpeg"
 
         ET.SubElement(
             item,
@@ -594,6 +825,7 @@ def create_feed(tweets):
     )
 
     print("")
+
     print(
         f"✅ Feed gespeichert: "
         f"{FEED_FILE}"
@@ -607,10 +839,16 @@ def create_feed(tweets):
 def main():
 
     print("=" * 60)
+
     print(
         f"X Direkt Feed für @{USERNAME}"
     )
+
     print("=" * 60)
+
+    # ------------------------------------------------------
+    # Profil abrufen
+    # ------------------------------------------------------
 
     profile_html = get_profile_html()
 
@@ -624,65 +862,87 @@ def main():
             "Keine Tweet-IDs gefunden."
         )
 
+    # ------------------------------------------------------
+    # Tweets untersuchen
+    # ------------------------------------------------------
+
     tweets = []
-    
-    # Mehr Tweets prüfen, da X einen angepinnten Tweet
-    # vor die eigentlichen neuesten Tweets setzen kann.
-    for tweet_id in tweet_ids[:5]:
-    
+
+    for tweet_id in tweet_ids[
+        :MAX_PROFILE_TWEETS
+    ]:
+
         try:
-    
+
             tweet_html = get_tweet(
                 tweet_id
             )
-    
+
             tweet = extract_tweet_data(
                 tweet_html,
                 tweet_id,
             )
-    
-            tweets.append(tweet)
-    
+
+            tweets.append(
+                tweet
+            )
+
         except Exception as e:
-    
+
             print(
                 f"❌ Tweet {tweet_id} "
                 f"konnte nicht verarbeitet werden:"
             )
-    
-            print(e)
-    
-    
-    # Nach tatsächlichem Veröffentlichungsdatum sortieren.
-    tweets.sort(
-        key=lambda tweet: tweet["created_at"],
-        reverse=True,
-    )
-    
-    
-    # Nur die 3 neuesten Tweets verwenden.
-    tweets = tweets[:3]
-    
-    print("")
-    print(
-        f"Verwende die {len(tweets)} neuesten Tweets:"
-    )
-    
-    for tweet in tweets:
-    
-        print(
-            f" - {tweet['id']} | "
-            f"{format_datetime(tweet['created_at'], usegmt=True)}"
-        )
-    
-    
 
+            print(e)
 
     if not tweets:
 
         raise RuntimeError(
             "Keine Tweets konnten verarbeitet werden."
         )
+
+    # ------------------------------------------------------
+    # Nach Datum sortieren
+    # ------------------------------------------------------
+
+    tweets.sort(
+        key=lambda tweet: tweet["created_at"],
+        reverse=True,
+    )
+
+    # ------------------------------------------------------
+    # Nur die gewünschten neuesten Tweets
+    # ------------------------------------------------------
+
+    tweets = tweets[
+        :MAX_FEED_TWEETS
+    ]
+
+    print("")
+
+    print(
+        f"Verwende die {len(tweets)} "
+        f"neuesten Tweets:"
+    )
+
+    for tweet in tweets:
+
+        print(
+            " -",
+            tweet["id"],
+            "|",
+            format_datetime(
+                tweet["created_at"],
+                usegmt=True,
+            ),
+            "|",
+            tweet["type"],
+        )
+
+    # ------------------------------------------------------
+    # Feed erstellen
+    # ------------------------------------------------------
 
     create_feed(
         tweets
