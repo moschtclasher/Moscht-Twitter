@@ -1299,6 +1299,11 @@ def main():
     tweet_ids = extract_tweet_ids(
         profile_html
     )
+
+    debug_profile_reposts(
+        profile_html,
+        tweet_ids,
+    )
     
     if not tweet_ids:
     
