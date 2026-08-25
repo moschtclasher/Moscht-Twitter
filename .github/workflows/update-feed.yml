@@ -68,52 +68,91 @@ jobs:
           print("")
           print("✅ FxTwitter Einzelpost funktioniert")
           PY
-      - name: FxTwitter Timeline testen
+      - name: X Timeline direkt testen
         run: |
           python - <<'PY'
           import requests
-          import json
+          import re
       
           username = "Twitch_Lurmii"
       
-          urls = [
-              f"https://api.fxtwitter.com/user/{username}",
-              f"https://api.fxtwitter.com/profile/{username}",
-              f"https://api.fxtwitter.com/{username}",
-          ]
+          url = f"https://x.com/{username}"
       
           print("=" * 60)
-          print("Teste FxTwitter Profil/Timeline")
+          print("Teste direkten X-Zugriff")
           print("=" * 60)
+          print("URL:", url)
       
-          for url in urls:
-              print("")
-              print("Teste:", url)
+          headers = {
+              "User-Agent": (
+                  "Mozilla/5.0 (X11; Linux x86_64) "
+                  "AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) "
+                  "Chrome/131.0.0.0 Safari/537.36"
+              ),
+              "Accept": (
+                  "text/html,application/xhtml+xml,"
+                  "application/xml;q=0.9,*/*;q=0.8"
+              ),
+              "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+          }
       
-              try:
-                  response = requests.get(
-                      url,
-                      timeout=30,
-                  )
+          response = requests.get(
+              url,
+              headers=headers,
+              timeout=30,
+          )
       
-                  print("HTTP:", response.status_code)
-                  print("Größe:", len(response.content))
+          print("HTTP Status:", response.status_code)
+          print("Antwortgröße:", len(response.content))
+          print("Content-Type:", response.headers.get("content-type"))
       
-                  if response.status_code == 200:
-                      try:
-                          data = response.json()
-                          print(
-                              json.dumps(
-                                  data,
-                                  indent=2,
-                                  ensure_ascii=False
-                              )[:5000]
-                          )
-                      except Exception:
-                          print(response.text[:2000])
+          html = response.text
       
-              except Exception as e:
-                  print("Fehler:", e)
+          print("")
+          print("Suche nach Status-IDs ...")
+      
+          ids = re.findall(
+              r"/(?:Twitch_Lurmii|[^/]+)/status/(\d{15,25})",
+              html,
+          )
+      
+          ids = list(dict.fromkeys(ids))
+      
+          print("Gefundene Status-IDs:", len(ids))
+      
+          for tweet_id in ids[:20]:
+              print(" -", tweet_id)
+      
+          print("")
+          print("Suche nach Tweet-URLs ...")
+      
+          urls = re.findall(
+              r"https://x\.com/[A-Za-z0-9_]+/status/\d{15,25}",
+              html,
+          )
+      
+          urls = list(dict.fromkeys(urls))
+      
+          for tweet_url in urls[:20]:
+              print(" -", tweet_url)
+      
+          print("")
+      
+          if response.status_code != 200:
+              raise SystemExit(
+                  f"❌ X antwortet mit HTTP {response.status_code}"
+              )
+      
+          if not ids:
+              print(
+                  "⚠️ X ist erreichbar, aber im HTML "
+                  "wurden keine Tweet-IDs gefunden."
+              )
+          else:
+              print(
+                  "✅ X liefert Tweet-IDs direkt im HTML."
+              )
           PY
 
 
