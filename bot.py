@@ -282,7 +282,47 @@ def extract_tweet_data(tweet_html, tweet_id):
     # ------------------------------------------------------
     # Text
     # ------------------------------------------------------
+    # ------------------------------------------------------
+    # DEBUG: Relevante X-Strukturen anzeigen
+    # ------------------------------------------------------
 
+    print("")
+    print("========== X-TWEET DEBUG ==========")
+
+    debug_patterns = [
+        r'"retweeted_status_id_str":"([^"]+)"',
+        r'"retweeted_status_id":"([^"]+)"',
+        r'"quoted_status_id_str":"([^"]+)"',
+        r'"quoted_status_id":"([^"]+)"',
+        r'"is_quote_status":(true|false)',
+        r'"retweeted":(true|false)',
+        r'"legacy":\{',
+        r'"quoted_status":\{',
+        r'"retweeted_status":\{',
+        r'"full_text":"([^"]{1,200})"',
+    ]
+
+    for pattern in debug_patterns:
+        matches = re.findall(
+            pattern,
+            tweet_html,
+            flags=re.IGNORECASE,
+        )
+
+        if matches:
+            print(
+                f"DEBUG {pattern}:"
+            )
+
+            for match in matches[:10]:
+                print(
+                    "  ",
+                    match,
+                )
+
+    print("========== END DEBUG ==========")
+
+    
     text = ""
 
     text_patterns = [
