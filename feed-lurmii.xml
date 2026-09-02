@@ -5,19 +5,8 @@
     <link>https://x.com/Twitch_Lurmii</link>
     <description>Automatisch erzeugter RSS-Feed für @Twitch_Lurmii</description>
     <language>de</language>
-    <lastBuildDate>Wed, 02 Sep 2026 13:01:08 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 02 Sep 2026 13:31:04 GMT</lastBuildDate>
     <generator>GitHub Actions über X</generator>
-    <item>
-      <title>Ich habe den Aufstieg zurück in Legende 1 wieder geschafft! Das alles kann ich aber nur der Base verdanken! Baselink: https://t.co/sjp7dMnu9s</title>
-      <description>Ich habe den Aufstieg zurück in Legende 1 wieder geschafft!
-Das alles kann ich aber nur der Base verdanken!
-Baselink: https://t.co/sjp7dMnu9s</description>
-      <link>https://x.com/Twitch_Lurmii/status/2091762397446820319</link>
-      <guid isPermaLink="false">2091762397446820319</guid>
-      <pubDate>Mon, 24 Aug 2026 05:39:53 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2091762397446820319_1.jpg" type="image/jpeg" length="13512" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2091762397446820319_1.jpg" medium="image" type="image/jpeg" />
-    </item>
     <item>
       <title>Bin heute im Stream gebrochen in Legende 2… das heißt, ich werde nächste Woche wieder von vorne anfangen. Legende 2 macht absolut keinen Spaß… #coc #clashofclans</title>
       <description>Bin heute im Stream gebrochen in Legende 2… das heißt, ich werde nächste Woche wieder von vorne anfangen.
@@ -40,6 +29,21 @@ Def spielt leider gar nicht mit, deswegen stay ich in Legende 2…
       <pubDate>Fri, 14 Aug 2026 21:50:32 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2088382792417571057_1.jpg" type="image/jpeg" length="542696" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2088382792417571057_1.jpg" medium="image" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Servus! Heute verlose ich für EUCH einen EventPass. Dieser Pass wird von meinem Clan @Confusion_CoC gesponsort! Vielen Dank an euch! Stream startet ungefähr um 19:30 und die Verlosung findet zwischen 19:45 und 20:00 Uhr statt! Seid dabei! https://t.co/f2NZ9B9UhY</title>
+      <description>Servus! Heute verlose ich für EUCH einen EventPass. Dieser Pass wird von meinem Clan @Confusion_CoC gesponsort!
+
+Vielen Dank an euch!
+
+Stream startet ungefähr um 19:30 und die Verlosung findet zwischen 19:45 und 20:00 Uhr statt!
+
+Seid dabei!
+
+https://t.co/f2NZ9B9UhY</description>
+      <link>https://x.com/Twitch_Lurmii/status/2088305022706577856</link>
+      <guid isPermaLink="false">2088305022706577856</guid>
+      <pubDate>Fri, 14 Aug 2026 16:41:30 GMT</pubDate>
     </item>
   </channel>
 </rss>
