@@ -5,8 +5,19 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Sun, 06 Sep 2026 02:01:28 GMT</lastBuildDate>
-    <generator>GitHub Actions über X</generator>
+    <lastBuildDate>Mon, 07 Sep 2026 07:44:56 GMT</lastBuildDate>
+    <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>Perfect on the final day #ClashOfClans #coc #LegendLeague</title>
+      <description>Perfect on the final day
+
+#ClashOfClans #coc #LegendLeague</description>
+      <link>https://x.com/moscht_coc/status/2096594326650327227</link>
+      <guid isPermaLink="false">2096594326650327227</guid>
+      <pubDate>Sun, 06 Sep 2026 13:40:14 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096594326650327227.jpg" type="image/jpeg" length="261994" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096594326650327227.jpg" medium="image" type="image/jpeg" />
+    </item>
     <item>
       <title>Why can’t this dude be used for pets? #ClashOfClans #coc</title>
       <description>Why can’t this dude be used for pets?
@@ -15,30 +26,19 @@
       <link>https://x.com/moscht_coc/status/2095766420101464461</link>
       <guid isPermaLink="false">2095766420101464461</guid>
       <pubDate>Fri, 04 Sep 2026 06:50:26 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2095766420101464461_1.jpg" type="image/jpeg" length="101536" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2095766420101464461_1.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2095766420101464461.jpg" type="image/jpeg" length="101536" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2095766420101464461.jpg" medium="image" type="image/jpeg" />
     </item>
     <item>
       <title>Readyyy⚔️ @CoCEsports @EsportsJn #ClashEsports #Worlds #ClashOfClans</title>
-      <description>Readyyy⚔️ @CoCEsports @EsportsJn 
+      <description>Readyyy⚔️ @CoCEsports @EsportsJn
 
 #ClashEsports #Worlds #ClashOfClans</description>
       <link>https://x.com/moscht_coc/status/2094800077411770619</link>
       <guid isPermaLink="false">2094800077411770619</guid>
       <pubDate>Tue, 01 Sep 2026 14:50:32 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2094800077411770619_1.jpg" type="image/jpeg" length="157042" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2094800077411770619_1.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Keep grinding🚀 #ClashOfClans #LegendLeague #TrophyPush</title>
-      <description>Keep grinding🚀
-
-#ClashOfClans #LegendLeague #TrophyPush</description>
-      <link>https://x.com/moscht_coc/status/2092232676057002068</link>
-      <guid isPermaLink="false">2092232676057002068</guid>
-      <pubDate>Tue, 25 Aug 2026 12:48:36 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2092232676057002068_1.jpg" type="image/jpeg" length="98667" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2092232676057002068_1.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2094800077411770619.jpg" type="image/jpeg" length="157042" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2094800077411770619.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>

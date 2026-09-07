@@ -5,18 +5,18 @@
     <link>https://x.com/Twitch_Lurmii</link>
     <description>Automatisch erzeugter RSS-Feed für @Twitch_Lurmii</description>
     <language>de</language>
-    <lastBuildDate>Sun, 06 Sep 2026 02:01:37 GMT</lastBuildDate>
-    <generator>GitHub Actions über X</generator>
+    <lastBuildDate>Mon, 07 Sep 2026 07:45:01 GMT</lastBuildDate>
+    <generator>GitHub Actions über Keep RSS</generator>
     <item>
-      <title>Ich habe den Aufstieg zurück in Legende 1 wieder geschafft! Das alles kann ich aber nur der Base verdanken! Baselink: https://t.co/sjp7dMnu9s</title>
+      <title>Ich habe den Aufstieg zurück in Legende 1 wieder geschafft! Das alles kann ich aber nur der Base verdanken! Baselink: https://link.clashofclans.com/en?action=OpenLayout&amp;id=TH18%3AWB%3AAAAARwAAAAJKdHBqlYl5Y-qilI3ZQT99</title>
       <description>Ich habe den Aufstieg zurück in Legende 1 wieder geschafft!
 Das alles kann ich aber nur der Base verdanken!
-Baselink: https://t.co/sjp7dMnu9s</description>
+Baselink: https://link.clashofclans.com/en?action=OpenLayout&amp;id=TH18%3AWB%3AAAAARwAAAAJKdHBqlYl5Y-qilI3ZQT99</description>
       <link>https://x.com/Twitch_Lurmii/status/2091762397446820319</link>
       <guid isPermaLink="false">2091762397446820319</guid>
       <pubDate>Mon, 24 Aug 2026 05:39:53 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2091762397446820319_1.jpg" type="image/jpeg" length="13512" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2091762397446820319_1.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2091762397446820319.png" type="image/png" length="13512" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2091762397446820319.png" medium="image" type="image/png" />
     </item>
     <item>
       <title>Bin heute im Stream gebrochen in Legende 2… das heißt, ich werde nächste Woche wieder von vorne anfangen. Legende 2 macht absolut keinen Spaß… #coc #clashofclans</title>
@@ -27,8 +27,8 @@ Legende 2 macht absolut keinen Spaß…
       <link>https://x.com/Twitch_Lurmii/status/2089450302952939797</link>
       <guid isPermaLink="false">2089450302952939797</guid>
       <pubDate>Mon, 17 Aug 2026 20:32:26 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2089450302952939797_1.jpg" type="image/jpeg" length="445167" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2089450302952939797_1.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2089450302952939797.jpg" type="image/jpeg" length="445167" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2089450302952939797.jpg" medium="image" type="image/jpeg" />
     </item>
     <item>
       <title>Mein erstes Mal in Legende 2 seit der neuen Legenden Liga. Def spielt leider gar nicht mit, deswegen stay ich in Legende 2… #coc #clashofclans</title>
@@ -38,8 +38,8 @@ Def spielt leider gar nicht mit, deswegen stay ich in Legende 2…
       <link>https://x.com/Twitch_Lurmii/status/2088382792417571057</link>
       <guid isPermaLink="false">2088382792417571057</guid>
       <pubDate>Fri, 14 Aug 2026 21:50:32 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2088382792417571057_1.jpg" type="image/jpeg" length="542696" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2088382792417571057_1.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2088382792417571057.jpg" type="image/jpeg" length="542696" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2088382792417571057.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
