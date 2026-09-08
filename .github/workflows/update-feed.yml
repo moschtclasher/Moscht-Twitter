@@ -49,10 +49,7 @@ jobs:
             git push
           fi
 
-      - name: Auf GitHub Pages warten
-        run: |
-          echo "Warte 60 Sekunden auf die Veröffentlichung der Bilder ..."
-          sleep 60
+
 
       - name: Discord-Posts senden
         env:
