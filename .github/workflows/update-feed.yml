@@ -3,6 +3,10 @@ name: Update X Feed
 on:
   workflow_dispatch:
 
+concurrency:
+  group: x-feed-discord
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
