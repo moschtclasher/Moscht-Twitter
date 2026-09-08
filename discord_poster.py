@@ -67,24 +67,82 @@ FEEDS = [
 # State
 # ==========================================================
 
-def load_state():
-    """Lädt den zuletzt geposteten Stand."""
+MAX_SENT_IDS = 100
 
+
+def load_state():
+    """Lädt die bereits erfolgreich gesendeten Tweet-IDs."""
     if not Path(STATE_FILE).exists():
         return {}
 
     try:
         with open(STATE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
+            raw = json.load(f)
+
+        # Neues Format: {feed_file: [guid, guid, ...]}
+        if isinstance(raw, dict):
+            normalized = {}
+            for feed_file, value in raw.items():
+                if isinstance(value, list):
+                    normalized[feed_file] = [str(x) for x in value][-MAX_SENT_IDS:]
+                elif value:
+                    # Altes Format kompatibel übernehmen.
+                    normalized[feed_file] = [str(value)]
+                else:
+                    normalized[feed_file] = []
+            return normalized
+
+    except Exception as e:
+        print(f"⚠️ Konnte {STATE_FILE} nicht lesen: {e}")
+
+    return {}
 
 
 def save_state(state):
-    """Speichert den zuletzt geposteten Stand."""
+    """Speichert die bereits erfolgreich gesendeten Tweet-IDs."""
+    clean_state = {
+        feed_file: list(dict.fromkeys(ids))[-MAX_SENT_IDS:]
+        for feed_file, ids in state.items()
+    }
 
     with open(STATE_FILE, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+        json.dump(clean_state, f, indent=2, ensure_ascii=False)
+
+
+def get_post_id(post):
+    """Ermittelt eine stabile ID für einen X-Post."""
+    guid = (post.get("guid") or "").strip()
+    if guid:
+        match = re.search(r"/status/(\d+)", guid)
+        if match:
+            return match.group(1)
+
+        # Bei bereits numerischer GUID direkt verwenden.
+        if guid.isdigit():
+            return guid
+
+        return guid
+
+    link = (post.get("link") or "").strip()
+    match = re.search(r"/status/(\d+)", link)
+    if match:
+        return match.group(1)
+
+    return ""
+
+
+def mark_as_sent(state, feed_file, post):
+    """Markiert einen Post erst nach erfolgreichem Discord-Versand als gesendet."""
+    post_id = get_post_id(post)
+    if not post_id:
+        return
+
+    sent_ids = state.setdefault(feed_file, [])
+    if post_id not in sent_ids:
+        sent_ids.append(post_id)
+
+    # State begrenzen, damit last_posts.json nicht unendlich wächst.
+    state[feed_file] = sent_ids[-MAX_SENT_IDS:]
 
 
 # ==========================================================
@@ -148,6 +206,10 @@ def read_feed(feed_file):
                 candidate = Path("images/moscht_coc") / image_name
             elif feed_file == "feed-confusion.xml":
                 candidate = Path("images/confusion_coc") / image_name
+            elif feed_file == "feed-lurmii.xml":
+                candidate = Path("images/twitch_lurmii") / image_name
+            elif feed_file == "feed-wolfi.xml":
+                candidate = Path("images/clashofwolfi") / image_name
             else:
                 candidate = None
 
@@ -331,8 +393,8 @@ def send_to_discord(post, feed):
                 timeout=30,
             )
 
-        if response.status_code == 204:
-            print(f"✅ Gesendet: {post['guid']}")
+        if 200 <= response.status_code < 300:
+            print(f"✅ Gesendet: {get_post_id(post)}")
             return True
 
         print(f"❌ Discord Fehler: {response.status_code}")
@@ -349,7 +411,6 @@ def send_to_discord(post, feed):
 # ==========================================================
 
 def process_feed(feed, state):
-
     print("")
     print("=" * 60)
     print(feed["feed_file"])
@@ -361,61 +422,50 @@ def process_feed(feed, state):
         print("Keine Beiträge gefunden.")
         return
 
-    last_guid = state.get(feed["feed_file"])
+    feed_file = feed["feed_file"]
+    sent_ids = set(state.get(feed_file, []))
 
-    # ------------------------------------------------------
-    # Erster Start
-    # ------------------------------------------------------
-
-    if last_guid is None:
-
-        print("➡️ Erster Start - sende letzte Beiträge")
-
-        history_posts = list(
-            reversed(
-                posts[:feed["history"]]
-            )
-        )
-
-        for post in history_posts:
-
-            send_to_discord(
-                post,
-                feed,
-            )
-
-        state[feed["feed_file"]] = posts[0]["guid"]
-
-        return
-
-    # ------------------------------------------------------
-    # Neue Beiträge finden
-    # ------------------------------------------------------
-
-    new_posts = []
-
+    # Nur Posts senden, deren Tweet-ID noch nicht erfolgreich gesendet wurde.
+    unsent_posts = []
     for post in posts:
+        post_id = get_post_id(post)
 
-        if post["guid"] == last_guid:
-            break
+        if not post_id:
+            print(f"⚠️ Keine Tweet-ID gefunden: {post.get('link', '')}")
+            continue
 
-        new_posts.append(post)
+        if post_id not in sent_ids:
+            unsent_posts.append(post)
 
-    if not new_posts:
+    # Bei einem komplett neuen Feed nicht den gesamten Feed spammen,
+    # sondern nur die konfigurierte Historie.
+    if not sent_ids:
+        posts_to_send = list(reversed(unsent_posts[:feed["history"]]))
+        print(f"➡️ Erster Start - sende bis zu {len(posts_to_send)} Beiträge")
+    else:
+        posts_to_send = list(reversed(unsent_posts))
+        print(f"➡️ {len(posts_to_send)} noch nicht gesendete Beiträge gefunden.")
+
+    if not posts_to_send:
         print("Keine neuen Beiträge.")
         return
 
-    print(f"{len(new_posts)} neue Beiträge gefunden.")
+    for post in posts_to_send:
+        post_id = get_post_id(post)
 
-    for post in reversed(new_posts):
+        print(f"📤 Sende Tweet {post_id} ...")
 
-        send_to_discord(
-            post,
-            feed,
-        )
+        if send_to_discord(post, feed):
+            # Nur bei HTTP 204 als erfolgreich markieren.
+            mark_as_sent(state, feed_file, post)
+            save_state(state)
+            print(f"💾 Als gesendet gespeichert: {post_id}")
+        else:
+            # Nicht als gesendet markieren -> nächster Lauf kann erneut versuchen.
+            print(f"⚠️ Nicht gespeichert, da Versand fehlgeschlagen: {post_id}")
 
-    state[feed["feed_file"]] = posts[0]["guid"]
-    # ==========================================================
+
+# ==========================================================
 # Main
 # ==========================================================
 
