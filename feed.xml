@@ -5,8 +5,22 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Fri, 11 Sep 2026 06:00:54 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 11 Sep 2026 14:01:03 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>Not the result we aimed for. GG to "Above n Beyond"👏 We need to learn from our mistakes and do better next time⚡ My two fails really suck😵 #CoC #ClanWarLeague #LegendLeague</title>
+      <description>Not the result we aimed for.
+GG to "Above n Beyond"👏
+We need to learn from our mistakes and do better next time⚡
+My two fails really suck😵
+
+#CoC #ClanWarLeague #LegendLeague</description>
+      <link>https://x.com/moscht_coc/status/2098324847914893471</link>
+      <guid isPermaLink="false">2098324847914893471</guid>
+      <pubDate>Fri, 11 Sep 2026 08:16:43 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2098324847914893471.png" type="image/png" length="229102" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2098324847914893471.png" medium="image" type="image/png" />
+    </item>
     <item>
       <title>New season. Same OP Builder🔥 Check out @ClashWithWolfi #BaseBuilding #ClashOfClans</title>
       <description>New season. Same OP Builder🔥
@@ -35,17 +49,6 @@ Only love for @ClashWithWolfi 🐺
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355.jpg" medium="image" type="image/jpeg" />
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355_1.jpg" type="image/jpeg" length="222934" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355_1.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Perfect on the final day #ClashOfClans #coc #LegendLeague</title>
-      <description>Perfect on the final day
-
-#ClashOfClans #coc #LegendLeague</description>
-      <link>https://x.com/moscht_coc/status/2096594326650327227</link>
-      <guid isPermaLink="false">2096594326650327227</guid>
-      <pubDate>Sun, 06 Sep 2026 13:40:14 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096594326650327227.jpg" type="image/jpeg" length="261994" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096594326650327227.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
