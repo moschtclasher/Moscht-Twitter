@@ -5,19 +5,8 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Mon, 14 Sep 2026 14:01:01 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 14 Sep 2026 22:00:56 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
-    <item>
-      <title>What did you get from the event chests?🫣 #ClashOfClans #Event #coc</title>
-      <description>What did you get from the event chests?🫣
-
-#ClashOfClans #Event #coc</description>
-      <link>https://x.com/moscht_coc/status/2099477429295165647</link>
-      <guid isPermaLink="false">2099477429295165647</guid>
-      <pubDate>Mon, 14 Sep 2026 12:36:40 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2099477429295165647.png" type="image/png" length="562714" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2099477429295165647.png" medium="image" type="image/png" />
-    </item>
     <item>
       <title>Not the result we aimed for. GG to "Above n Beyond"👏 We need to learn from our mistakes and do better next time⚡ My two fails really suck😵 #CoC #ClanWarLeague #LegendLeague</title>
       <description>Not the result we aimed for.
@@ -43,6 +32,23 @@ Check out @ClashWithWolfi
       <pubDate>Wed, 09 Sep 2026 05:15:00 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2097554343838802384.jpg" type="image/jpeg" length="265319" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2097554343838802384.jpg" medium="image" type="image/jpeg" />
+    </item>
+    <item>
+      <title>This guy is almost back in his prime🔥 His bases carried me to these ranks, although my off was sometime pure garbage…. Thankful for the oppotuniy to work with this guy and hyped for the coming season⚡️ Only love for @ClashWithWolfi 🐺 #ClashOfClans #BaseBuilding #Finish</title>
+      <description>This guy is almost back in his prime🔥 His bases carried me to these ranks, although my off was sometime pure garbage….
+
+Thankful for the oppotuniy to work with this guy and hyped for the coming season⚡️
+
+Only love for @ClashWithWolfi 🐺
+
+#ClashOfClans #BaseBuilding #Finish</description>
+      <link>https://x.com/moscht_coc/status/2096870108761137355</link>
+      <guid isPermaLink="false">2096870108761137355</guid>
+      <pubDate>Mon, 07 Sep 2026 07:56:06 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355.jpg" type="image/jpeg" length="230581" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355_1.jpg" type="image/jpeg" length="222934" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2096870108761137355_1.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
