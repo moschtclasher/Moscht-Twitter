@@ -5,8 +5,15 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Wed, 16 Sep 2026 14:01:02 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 16 Sep 2026 22:00:59 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>Finally! But the main problem is still being ignored. Nerf the Revenge deck! @ClashofClans</title>
+      <description>Finally! But the main problem is still being ignored. Nerf the Revenge deck! @ClashofClans</description>
+      <link>https://x.com/moscht_coc/status/2100165636206825912</link>
+      <guid isPermaLink="false">2100165636206825912</guid>
+      <pubDate>Wed, 16 Sep 2026 10:11:21 GMT</pubDate>
+    </item>
     <item>
       <title>Overall, I’m happy with my current stats, but I know I can push them much further. My goal is to become more consistent, improve with every attack, and keep sharpening the small details. Not finished yet — hungry for more.</title>
       <description>Overall, I’m happy with my current stats, but I know I can push them much further.
@@ -30,20 +37,6 @@ Not finished yet — hungry for more.</description>
       <pubDate>Mon, 14 Sep 2026 12:36:40 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2099477429295165647.png" type="image/png" length="562714" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2099477429295165647.png" medium="image" type="image/png" />
-    </item>
-    <item>
-      <title>Not the result we aimed for. GG to "Above n Beyond"👏 We need to learn from our mistakes and do better next time⚡ My two fails really suck😵 #CoC #ClanWarLeague #LegendLeague</title>
-      <description>Not the result we aimed for.
-GG to "Above n Beyond"👏
-We need to learn from our mistakes and do better next time⚡
-My two fails really suck😵
-
-#CoC #ClanWarLeague #LegendLeague</description>
-      <link>https://x.com/moscht_coc/status/2098324847914893471</link>
-      <guid isPermaLink="false">2098324847914893471</guid>
-      <pubDate>Fri, 11 Sep 2026 08:16:43 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2098324847914893471.png" type="image/png" length="229102" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2098324847914893471.png" medium="image" type="image/png" />
     </item>
   </channel>
 </rss>
