@@ -5,8 +5,19 @@
     <link>https://x.com/ClashWithWolfi</link>
     <description>Automatisch erzeugter RSS-Feed für @ClashWithWolfi</description>
     <language>de</language>
-    <lastBuildDate>Thu, 24 Sep 2026 14:01:13 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 24 Sep 2026 22:01:05 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>• Forces farside entries → higher one-star potential • Usually designed to keep attackers away from the Town Hall • Weakness: Clean farside funnel = high chance of a triple</title>
+      <description>• Forces farside entries → higher one-star potential
+• Usually designed to keep attackers away from the Town Hall
+• Weakness: Clean farside funnel = high chance of a triple</description>
+      <link>https://x.com/ClashWithWolfi/status/2103187881225503218</link>
+      <guid isPermaLink="false">2103187881225503218</guid>
+      <pubDate>Thu, 24 Sep 2026 18:20:40 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2103187881225503218.jpg" type="image/jpeg" length="746123" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2103187881225503218.jpg" medium="image" type="image/jpeg" />
+    </item>
     <item>
       <title>🙂somehow it’s make more fun to build for legend 2/3</title>
       <description>🙂somehow it’s make more fun to build for legend 2/3</description>
@@ -23,15 +34,6 @@
       <pubDate>Sun, 20 Sep 2026 21:16:57 GMT</pubDate>
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2101782691951857934.jpg" type="image/jpeg" length="587820" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2101782691951857934.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Did someone say ONESTAR ?</title>
-      <description>Did someone say ONESTAR ?</description>
-      <link>https://x.com/ClashWithWolfi/status/2101347005901468084</link>
-      <guid isPermaLink="false">2101347005901468084</guid>
-      <pubDate>Sat, 19 Sep 2026 16:25:42 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2101347005901468084.jpg" type="image/jpeg" length="242153" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2101347005901468084.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
