@@ -1,39 +1,34 @@
 <?xml version='1.0' encoding='utf-8'?>
-<rss xmlns:ns0="http://search.yahoo.com/mrss/" version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>X-Posts von @ClashWithWolfi</title>
     <link>https://x.com/ClashWithWolfi</link>
     <description>Automatisch erzeugter RSS-Feed für @ClashWithWolfi</description>
     <language>de</language>
-    <lastBuildDate>Wed, 30 Sep 2026 14:01:12 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 01 Oct 2026 14:01:11 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
     <item>
-      <title>Check out the new @iTzuDL video to learn how to easily take down these Anti-Thrower Bases! Also, thanks for the shoutout, iTzu! 🫡 https://youtu.be/ZGHcWxXgQgA?si=MC3lOZ34FeRwnHsv</title>
-      <description>Check out the new @iTzuDL video to learn how to easily take down these Anti-Thrower Bases!
-
-Also, thanks for the shoutout, iTzu! 🫡
-https://youtu.be/ZGHcWxXgQgA?si=MC3lOZ34FeRwnHsv</description>
-      <link>https://x.com/ClashWithWolfi/status/2104946974621659449</link>
-      <guid isPermaLink="false">2104946974621659449</guid>
-      <pubDate>Tue, 29 Sep 2026 14:50:41 GMT</pubDate>
-      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2104946974621659449.jpg" type="image/jpeg" length="379079" />
-      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2104946974621659449.jpg" medium="image" type="image/jpeg" />
+      <title>Time to get stronger then ever 😍</title>
+      <description>Time to get stronger then ever 😍</description>
+      <link>https://x.com/ClashWithWolfi/status/2105400921979031732</link>
+      <guid isPermaLink="false">2105400921979031732</guid>
+      <pubDate>Wed, 30 Sep 2026 20:54:30 GMT</pubDate>
     </item>
     <item>
-      <title>👀did someone say Legend 2 and 3 to Hard ?</title>
-      <description>👀did someone say Legend 2 and 3 to Hard ?</description>
-      <link>https://x.com/ClashWithWolfi/status/2104533901209194840</link>
-      <guid isPermaLink="false">2104533901209194840</guid>
-      <pubDate>Mon, 28 Sep 2026 11:29:17 GMT</pubDate>
+      <title>Isolated compartments → forces attackers to split their army Designed to create awkward pathing and waste time Weakness: Clean pathing between islands can make the base fall apart quickly</title>
+      <description>Isolated compartments → forces attackers to split their army
+Designed to create awkward pathing and waste time
+Weakness: Clean pathing between islands can make the base fall apart quickly</description>
+      <link>https://x.com/ClashWithWolfi/status/2105342349358305314</link>
+      <guid isPermaLink="false">2105342349358305314</guid>
+      <pubDate>Wed, 30 Sep 2026 17:01:46 GMT</pubDate>
     </item>
     <item>
-      <title>Strong core → makes it difficult to reach key defenses Forces attackers to commit heavily to one section Weakness: Good funnel + clean core access can open up the entire base</title>
-      <description>Strong core → makes it difficult to reach key defenses
-Forces attackers to commit heavily to one section
-Weakness: Good funnel + clean core access can open up the entire base</description>
-      <link>https://x.com/ClashWithWolfi/status/2104230381813739583</link>
-      <guid isPermaLink="false">2104230381813739583</guid>
-      <pubDate>Sun, 27 Sep 2026 15:23:12 GMT</pubDate>
+      <title>Goat</title>
+      <description>Goat</description>
+      <link>https://x.com/ClashWithWolfi/status/2105303757638787251</link>
+      <guid isPermaLink="false">2105303757638787251</guid>
+      <pubDate>Wed, 30 Sep 2026 14:28:25 GMT</pubDate>
     </item>
   </channel>
 </rss>
