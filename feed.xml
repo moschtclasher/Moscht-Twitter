@@ -5,8 +5,17 @@
     <link>https://x.com/moscht_coc</link>
     <description>Automatisch erzeugter RSS-Feed für @moscht_coc</description>
     <language>de</language>
-    <lastBuildDate>Thu, 01 Oct 2026 14:01:06 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 02 Oct 2026 14:01:03 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>@moscht_coc</title>
+      <description>@moscht_coc</description>
+      <link>https://x.com/moscht_coc/status/2105883890980397058</link>
+      <guid isPermaLink="false">2105883890980397058</guid>
+      <pubDate>Fri, 02 Oct 2026 04:53:39 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2105883890980397058.png" type="image/png" length="18265" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2105883890980397058.png" medium="image" type="image/png" />
+    </item>
     <item>
       <title>iconic #ClashOfClans #gift #freegems</title>
       <description>iconic
@@ -30,13 +39,6 @@
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2102271753741590577.jpg" medium="image" type="image/jpeg" />
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2102271753741590577_1.jpg" type="image/jpeg" length="439091" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/moscht_coc/2102271753741590577_1.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Finally! But the main problem is still being ignored. Nerf the Revenge deck! @ClashofClans</title>
-      <description>Finally! But the main problem is still being ignored. Nerf the Revenge deck! @ClashofClans</description>
-      <link>https://x.com/moscht_coc/status/2100165636206825912</link>
-      <guid isPermaLink="false">2100165636206825912</guid>
-      <pubDate>Wed, 16 Sep 2026 10:11:21 GMT</pubDate>
     </item>
   </channel>
 </rss>
