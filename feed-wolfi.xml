@@ -1,34 +1,41 @@
 <?xml version='1.0' encoding='utf-8'?>
-<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+<rss xmlns:ns0="http://search.yahoo.com/mrss/" version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>X-Posts von @ClashWithWolfi</title>
     <link>https://x.com/ClashWithWolfi</link>
     <description>Automatisch erzeugter RSS-Feed für @ClashWithWolfi</description>
     <language>de</language>
-    <lastBuildDate>Fri, 02 Oct 2026 22:01:03 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 04 Oct 2026 06:01:33 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>Waiting for what ? Bases -&gt; https://discord.gg/bER9Sa4qwg</title>
+      <description>Waiting for what ?
+Bases -&gt; https://discord.gg/bER9Sa4qwg</description>
+      <link>https://x.com/ClashWithWolfi/status/2106485076875722879</link>
+      <guid isPermaLink="false">2106485076875722879</guid>
+      <pubDate>Sat, 03 Oct 2026 20:42:33 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879.jpg" type="image/jpeg" length="438329" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_1.jpg" type="image/jpeg" length="329725" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_1.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_2.jpg" type="image/jpeg" length="408707" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_2.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_3.jpg" type="image/jpeg" length="449136" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_3.jpg" medium="image" type="image/jpeg" />
+    </item>
+    <item>
+      <title>It’s time for a new era. 🔥🔥🔥</title>
+      <description>It’s time for a new era. 🔥🔥🔥</description>
+      <link>https://x.com/ClashWithWolfi/status/2106460436442882077</link>
+      <guid isPermaLink="false">2106460436442882077</guid>
+      <pubDate>Sat, 03 Oct 2026 19:04:38 GMT</pubDate>
+    </item>
     <item>
       <title>Time to get stronger then ever 😍</title>
       <description>Time to get stronger then ever 😍</description>
       <link>https://x.com/ClashWithWolfi/status/2105400921979031732</link>
       <guid isPermaLink="false">2105400921979031732</guid>
       <pubDate>Wed, 30 Sep 2026 20:54:30 GMT</pubDate>
-    </item>
-    <item>
-      <title>Isolated compartments → forces attackers to split their army Designed to create awkward pathing and waste time Weakness: Clean pathing between islands can make the base fall apart quickly</title>
-      <description>Isolated compartments → forces attackers to split their army
-Designed to create awkward pathing and waste time
-Weakness: Clean pathing between islands can make the base fall apart quickly</description>
-      <link>https://x.com/ClashWithWolfi/status/2105342349358305314</link>
-      <guid isPermaLink="false">2105342349358305314</guid>
-      <pubDate>Wed, 30 Sep 2026 17:01:46 GMT</pubDate>
-    </item>
-    <item>
-      <title>Goat</title>
-      <description>Goat</description>
-      <link>https://x.com/ClashWithWolfi/status/2105303757638787251</link>
-      <guid isPermaLink="false">2105303757638787251</guid>
-      <pubDate>Wed, 30 Sep 2026 14:28:25 GMT</pubDate>
     </item>
   </channel>
 </rss>
