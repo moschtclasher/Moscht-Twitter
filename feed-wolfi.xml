@@ -5,8 +5,16 @@
     <link>https://x.com/ClashWithWolfi</link>
     <description>Automatisch erzeugter RSS-Feed für @ClashWithWolfi</description>
     <language>de</language>
-    <lastBuildDate>Sun, 04 Oct 2026 14:00:54 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 05 Oct 2026 22:01:01 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>Last Week we did okay... Going to top it this week 😈</title>
+      <description>Last Week we did okay...
+Going to top it this week 😈</description>
+      <link>https://x.com/ClashWithWolfi/status/2107129727060164684</link>
+      <guid isPermaLink="false">2107129727060164684</guid>
+      <pubDate>Mon, 05 Oct 2026 15:24:10 GMT</pubDate>
+    </item>
     <item>
       <title>Waiting for what ? Bases -&gt; https://discord.gg/bER9Sa4qwg</title>
       <description>Waiting for what ?
@@ -29,13 +37,6 @@ Bases -&gt; https://discord.gg/bER9Sa4qwg</description>
       <link>https://x.com/ClashWithWolfi/status/2106460436442882077</link>
       <guid isPermaLink="false">2106460436442882077</guid>
       <pubDate>Sat, 03 Oct 2026 19:04:38 GMT</pubDate>
-    </item>
-    <item>
-      <title>Time to get stronger then ever 😍</title>
-      <description>Time to get stronger then ever 😍</description>
-      <link>https://x.com/ClashWithWolfi/status/2105400921979031732</link>
-      <guid isPermaLink="false">2105400921979031732</guid>
-      <pubDate>Wed, 30 Sep 2026 20:54:30 GMT</pubDate>
     </item>
   </channel>
 </rss>
