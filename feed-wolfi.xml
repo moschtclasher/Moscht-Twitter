@@ -5,8 +5,15 @@
     <link>https://x.com/ClashWithWolfi</link>
     <description>Automatisch erzeugter RSS-Feed für @ClashWithWolfi</description>
     <language>de</language>
-    <lastBuildDate>Sat, 10 Oct 2026 22:01:13 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 13 Oct 2026 14:01:15 GMT</lastBuildDate>
     <generator>GitHub Actions über Keep RSS</generator>
+    <item>
+      <title>The quality of my bases speaks for itself. Even when your attacks aren't perfect or you're experimenting with new armies, the bases keep delivering results. (mostly)</title>
+      <description>The quality of my bases speaks for itself. Even when your attacks aren't perfect or you're experimenting with new armies, the bases keep delivering results. (mostly)</description>
+      <link>https://x.com/ClashWithWolfi/status/2109744455452672060</link>
+      <guid isPermaLink="false">2109744455452672060</guid>
+      <pubDate>Mon, 12 Oct 2026 20:34:09 GMT</pubDate>
+    </item>
     <item>
       <title>Last Week we did okay... Going to top it this week 😈</title>
       <description>Last Week we did okay...
@@ -30,13 +37,6 @@ Bases -&gt; https://discord.gg/bER9Sa4qwg</description>
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_2.jpg" medium="image" type="image/jpeg" />
       <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_3.jpg" type="image/jpeg" length="449136" />
       <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/clashwithwolfi/2106485076875722879_3.jpg" medium="image" type="image/jpeg" />
-    </item>
-    <item>
-      <title>It’s time for a new era. 🔥🔥🔥</title>
-      <description>It’s time for a new era. 🔥🔥🔥</description>
-      <link>https://x.com/ClashWithWolfi/status/2106460436442882077</link>
-      <guid isPermaLink="false">2106460436442882077</guid>
-      <pubDate>Sat, 03 Oct 2026 19:04:38 GMT</pubDate>
     </item>
   </channel>
 </rss>
