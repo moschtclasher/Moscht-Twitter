@@ -114,17 +114,20 @@ def parse_timestamp(value):
 
 
 def create_embed(post, feed):
-    text = (post.get("text") or "").strip()
+    text = re.sub(
+        r"https?://\S+",
+        "",
+        post.get("text", "")
+    ).strip()
+
     if not text:
         text = "Neuer X-Beitrag"
 
-    # Discord erlaubt bis zu 4096 Zeichen in der Embed-Beschreibung.
     text = text[:3800]
     description = f"{text}\n\n🔗 [Beitrag ansehen]({post['url']})"
 
     embed = {
         "description": description,
-        "url": post["url"],
         "color": feed["color"],
         "footer": {"text": feed["footer"]},
     }
