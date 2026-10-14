@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+<rss xmlns:ns0="http://search.yahoo.com/mrss/" version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>X-Posts von @Twitch_Lurmii</title>
     <link>https://x.com/Twitch_Lurmii</link>
     <description>RSS-Feed für @Twitch_Lurmii</description>
-    <lastBuildDate>Wed, 14 Oct 2026 10:31:07 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 14 Oct 2026 11:05:44 GMT</lastBuildDate>
     <item>
       <title>🎉🎁 GIVEAWAY ALERT! 🎁🎉 Als Dankeschön für euren Support verlose ich 2 Szenerien an 2 Gewinner! ❤️🔥 ✅ Twitch-Follow ✅ YouTube-Abo 👉 Die Teilnahme läuft über meinen Discord! ⏳ Noch 7 Tage Zeit – also seid dabei! 🍀 🔗 https://t.co/hoOZazC2KQ #ClashofClans #CoC</title>
       <description>🎉🎁 GIVEAWAY ALERT! 🎁🎉
@@ -42,6 +42,12 @@ What more could you ask for? 👀
       <link>https://x.com/Twitch_Lurmii/status/2106882470771875969</link>
       <guid isPermaLink="false">2106882470771875969</guid>
       <pubDate>Sun, 04 Oct 2026 23:01:39 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2106882470771875969.jpg" type="image/jpeg" length="276759" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2106882470771875969.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2106882470771875969_2.jpg" type="image/jpeg" length="175129" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2106882470771875969_2.jpg" medium="image" type="image/jpeg" />
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2106882470771875969_3.jpg" type="image/jpeg" length="158371" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2106882470771875969_3.jpg" medium="image" type="image/jpeg" />
     </item>
     <item>
       <title>🔁 Repost von @biglegendscoc 𝗕𝗜𝗚 𝗗𝗔𝗬 𝗙𝗢𝗥 𝗕𝗜𝗚 𝗟𝗘𝗚𝗘𝗡𝗗𝗦! 🔥 🤩 𝗥𝗬𝗨𝗧𝗔 𝗜𝗦 𝗝𝗢𝗜𝗡𝗜𝗡𝗚 𝗕𝗜𝗚 𝗟𝗘𝗚𝗘𝗡𝗗𝗦! One of the most talented names in the #ClashOfClans competitive scene is officially joining the BL family. 🏆 🥳 𝟭𝟬𝘅 𝗚𝗢𝗟𝗗 𝗣𝗔𝗦𝗦 𝗚𝗜𝗩𝗘𝗔𝗪𝗔𝗬! To celebrate https://t.co/MaBj6awUYX</title>
@@ -59,6 +65,8 @@ To celebrate https://t.co/MaBj6awUYX</description>
       <link>https://x.com/Twitch_Lurmii/status/2095449590526808323</link>
       <guid isPermaLink="false">2095449590526808323</guid>
       <pubDate>Thu, 03 Sep 2026 09:51:28 GMT</pubDate>
+      <enclosure url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2095449590526808323.jpg" type="image/jpeg" length="258109" />
+      <ns0:content url="https://moschtclasher.github.io/Moscht-Twitter/images/twitch_lurmii/2095449590526808323.jpg" medium="image" type="image/jpeg" />
     </item>
   </channel>
 </rss>
