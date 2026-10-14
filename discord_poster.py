@@ -251,11 +251,14 @@ def main():
         # Chronologisch senden: älteste neue Beiträge zuerst.
         unsent.sort(key=lambda post: post.get("created_at", ""))
 
-        # Bei einem allerersten Lauf nur die drei neuesten senden,
-        # damit nicht die komplette API-Historie gepostet wird.
+        # Wenn für diesen Feed kein Versandstatus existiert,
+        # nichts automatisch senden. Erst den Status sicher prüfen.
         if not state.get(feed["key"]):
-            unsent = unsent[-3:]
-            print("Erstlauf: maximal drei Beiträge werden gesendet.")
+            print(
+                f"⚠️ Kein gespeicherter Status für {feed['key']}. "
+                "Aus Sicherheitsgründen wird nichts gesendet."
+            )
+            continue
 
         print(f"Neue, noch nicht gesendete Beiträge: {len(unsent)}")
 
