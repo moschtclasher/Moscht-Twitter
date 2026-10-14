@@ -189,8 +189,11 @@ def fetch_posts(username):
         else:
             text = own_text
 
+
         media_urls = []
         candidates = [post]
+
+        # Medien des eigenen Posts und des referenzierten Posts sammeln.
         if referenced:
             candidates.append(referenced)
 
@@ -201,6 +204,51 @@ def fetch_posts(username):
                 url = media.get("url") or media.get("preview_image_url")
                 if url and url not in media_urls:
                     media_urls.append(url)
+
+        # Wenn beim Repost keine Bilder gefunden wurden,
+        # die Daten des Originalposts direkt bei X abrufen.
+        if referenced and not media_urls:
+            referenced_id = str(referenced.get("id", ""))
+            if referenced_id:
+                try:
+                    detail = request_json(
+                        f"{API_BASE}/tweets/{referenced_id}",
+                        {
+                            "tweet.fields": "attachments",
+                            "expansions": "attachments.media_keys",
+                            "media.fields": (
+                                "media_key,type,url,preview_image_url,alt_text"
+                            ),
+                        },
+                    )
+
+                    detail_post = detail.get("data") or {}
+                    detail_includes = detail.get("includes") or {}
+                    detail_media = {
+                        m["media_key"]: m
+                        for m in detail_includes.get("media", [])
+                        if m.get("media_key")
+                    }
+
+                    for media_key in (
+                        (detail_post.get("attachments") or {}).get(
+                            "media_keys", []
+                        )
+                    ):
+                        media = detail_media.get(media_key) or {}
+                        url = (
+                            media.get("url")
+                            or media.get("preview_image_url")
+                        )
+                        if url and url not in media_urls:
+                            media_urls.append(url)
+
+                except requests.RequestException as exc:
+                    print(
+                        "Medien des Originalposts konnten nicht "
+                        f"abgerufen werden: {exc}"
+                    )
+
 
         normalized.append({
             "id": post_id,
