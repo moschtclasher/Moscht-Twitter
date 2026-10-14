@@ -28,19 +28,23 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install requests
 
+
       - name: RSS-Feeds und Bilder erstellen
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
         run: |
           python bot.py
           python bot_confusion.py
           python bot_lurmii.py
           python bot_wolfi.py
 
+
       - name: RSS-Dateien und Bilder speichern
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add *.xml images/
+          git add *.xml images/ x_user_ids.json x_seen_posts.json
 
           if git diff --cached --quiet; then
             echo "Keine Änderungen an RSS-Dateien oder Bildern."
