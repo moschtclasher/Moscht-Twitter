@@ -17,6 +17,7 @@ POST_CACHE_FILE = Path("x_posts_cache.json")
 LAST_POSTS_FILE = Path("last_posts.json")
 START_IDS_FILE = Path("x_discord_start_ids.json")
 QUEUE_BACKUP_FILE = Path("x_recent_posts_before_safe_restart.json")
+API_STATE_FILE = Path("x_api_last_ids.json")
 TIMEOUT = 30
 MAX_RSS_POSTS = 3
 
@@ -116,21 +117,29 @@ def parse_created_at(value):
 
 
 def fetch_posts(username):
+    """Lädt höchstens sechs neue Posts seit der gespeicherten API-ID.
+
+    Gibt (alle_cache_posts, neu_abgerufene_posts, höchste_neue_id) zurück.
+    Die API-ID wird hier absichtlich NICHT gespeichert: Das passiert erst,
+    nachdem run_account() die neuen Posts sicher in die Queue geschrieben hat.
+    """
     user_id = get_user_id(username)
+    account_key = username.lower()
 
     post_cache = load_json(POST_CACHE_FILE, {})
-    cached_posts = post_cache.get(username.lower(), [])
-    
-    cached_ids = [
-        int(post["id"])
-        for post in cached_posts
-        if str(post.get("id", "")).isdigit()
-    ]
-    
-    last_cached_id = str(max(cached_ids)) if cached_ids else None
-    
+    if not isinstance(post_cache, dict):
+        post_cache = {}
+    cached_posts = post_cache.get(account_key, [])
+    if not isinstance(cached_posts, list):
+        cached_posts = []
+
+    api_state = load_json(API_STATE_FILE, {})
+    if not isinstance(api_state, dict):
+        api_state = {}
+    last_id = api_state.get(account_key)
+
     params = {
-        "max_results": 100,
+        "max_results": 6,
         "exclude": "replies",
         "tweet.fields": (
             "created_at,referenced_tweets,attachments,author_id"
@@ -146,21 +155,20 @@ def fetch_posts(username):
         "user.fields": "username,name",
     }
 
-    if last_cached_id:
-        params["since_id"] = last_cached_id
-        print(
-            f"@{username}: Suche nach neuen Posts seit "
-            f"{last_cached_id}."
-        )
+    if last_id and str(last_id).isdigit():
+        params["since_id"] = str(last_id)
+        print(f"@{username}: Neue Posts seit API-ID {last_id} (max. 6).")
     else:
-        print(
-            f"@{username}: Noch kein Cache vorhanden. "
-            "Initialer Abruf."
+        # run_account() initialisiert die ID aus der Startgrenze, bevor
+        # diese Funktion aufgerufen wird. Hier nicht stillschweigend
+        # einen ungebremsten initialen Abruf durchführen.
+        raise RuntimeError(
+            f"Für @{username} fehlt die API-Start-ID in {API_STATE_FILE}. "
+            "Die Start-ID muss vor dem API-Abruf initialisiert werden."
         )
-    
-    result = request_json(
-        f"{API_BASE}/users/{user_id}/tweets", params
-    )
+
+    result = request_json(f"{API_BASE}/users/{user_id}/tweets", params)
+    api_posts = result.get("data") or []
 
     included = result.get("includes") or {}
     tweets_by_id = {
@@ -180,15 +188,13 @@ def fetch_posts(username):
     }
 
     normalized = []
-
-    for post in result.get("data") or []:
+    for post in api_posts:
         post_id = str(post.get("id", ""))
         if not post_id:
             continue
 
         refs = post.get("referenced_tweets") or []
         ref_types = {r.get("type") for r in refs}
-
         is_repost = "retweeted" in ref_types
         is_quote = "quoted" in ref_types
 
@@ -200,44 +206,27 @@ def fetch_posts(username):
                     break
 
         author_id = str(referenced.get("author_id", ""))
-        original_username = (
-            users_by_id.get(author_id) or {}
-        ).get("username", "")
-
+        original_username = (users_by_id.get(author_id) or {}).get("username", "")
         own_text = (post.get("text") or "").strip()
         original_text = (referenced.get("text") or "").strip()
 
         if is_repost:
             author = f"@{original_username}" if original_username else "Original-Post"
-            text = (
-                f"🔁 Repost von {author}\n\n"
-                f"{original_text or own_text}"
-            )
+            text = f"🔁 Repost von {author}\n\n{original_text or own_text}"
         elif is_quote:
             text = own_text
             if original_text:
-                author = (
-                    f"@{original_username}"
-                    if original_username
-                    else "Original-Post"
-                )
-                text += (
-                    f"\n\n──────────────\n"
-                    f"Zitat von {author}:\n{original_text}"
-                )
+                author = f"@{original_username}" if original_username else "Original-Post"
+                text += f"\n\n──────────────\nZitat von {author}:\n{original_text}"
             else:
                 text = "🗨️ Zitierter Post\n\n" + text
         else:
             text = own_text
 
-
         media_urls = []
         candidates = [post]
-
-        # Medien des eigenen Posts und des referenzierten Posts sammeln.
         if referenced:
             candidates.append(referenced)
-
         for candidate in candidates:
             attachments = candidate.get("attachments") or {}
             for media_key in attachments.get("media_keys", []):
@@ -246,8 +235,6 @@ def fetch_posts(username):
                 if url and url not in media_urls:
                     media_urls.append(url)
 
-        # Wenn beim Repost keine Bilder gefunden wurden,
-        # die Daten des Originalposts direkt bei X abrufen.
         if referenced and not media_urls:
             referenced_id = str(referenced.get("id", ""))
             if referenced_id:
@@ -257,12 +244,9 @@ def fetch_posts(username):
                         {
                             "tweet.fields": "attachments",
                             "expansions": "attachments.media_keys",
-                            "media.fields": (
-                                "media_key,type,url,preview_image_url,alt_text"
-                            ),
+                            "media.fields": "media_key,type,url,preview_image_url,alt_text",
                         },
                     )
-
                     detail_post = detail.get("data") or {}
                     detail_includes = detail.get("includes") or {}
                     detail_media = {
@@ -270,72 +254,43 @@ def fetch_posts(username):
                         for m in detail_includes.get("media", [])
                         if m.get("media_key")
                     }
-
-                    for media_key in (
-                        (detail_post.get("attachments") or {}).get(
-                            "media_keys", []
-                        )
-                    ):
+                    for media_key in (detail_post.get("attachments") or {}).get("media_keys", []):
                         media = detail_media.get(media_key) or {}
-                        url = (
-                            media.get("url")
-                            or media.get("preview_image_url")
-                        )
+                        url = media.get("url") or media.get("preview_image_url")
                         if url and url not in media_urls:
                             media_urls.append(url)
-
                 except requests.RequestException as exc:
-                    print(
-                        "Medien des Originalposts konnten nicht "
-                        f"abgerufen werden: {exc}"
-                    )
-
+                    print(f"Medien des Originalposts konnten nicht abgerufen werden: {exc}")
 
         normalized.append({
             "id": post_id,
             "text": text,
-            "created_at": parse_created_at(
-                post.get("created_at")
-            ).isoformat(),
+            "created_at": parse_created_at(post.get("created_at")).isoformat(),
             "url": f"https://x.com/{username}/status/{post_id}",
             "media_urls": media_urls,
             "is_repost": is_repost,
             "is_quote": is_quote,
         })
 
-    normalized.sort(
-        key=lambda p: p["created_at"], reverse=True
-    )
-    
-    # Neue und bereits gespeicherte Posts zusammenführen.
+    normalized.sort(key=lambda p: p["created_at"], reverse=True)
     merged = {
         str(post["id"]): post
         for post in cached_posts
-        if post.get("id")
+        if isinstance(post, dict) and post.get("id")
     }
-    
     for post in normalized:
         merged[str(post["id"])] = post
-    
-    all_posts = sorted(
-        merged.values(),
-        key=lambda p: p["created_at"],
-        reverse=True,
-    )
-    
-    # Cache begrenzen, damit die Datei nicht unbegrenzt wächst.
-    all_posts = all_posts[:500]
-    
-    post_cache[username.lower()] = all_posts
-    save_json(POST_CACHE_FILE, post_cache)
-    
-    print(
-        f"@{username}: {len(normalized)} neue API-Ergebnisse, "
-        f"{len(all_posts)} Posts im Cache."
-    )
-    
-    return all_posts
 
+    all_posts = sorted(merged.values(), key=lambda p: p["created_at"], reverse=True)[:500]
+    post_cache[account_key] = all_posts
+    save_json(POST_CACHE_FILE, post_cache)
+
+    newest_id = max(
+        (int(post["id"]) for post in normalized if str(post.get("id", "")).isdigit()),
+        default=None,
+    )
+    print(f"@{username}: {len(normalized)} neue API-Ergebnisse, {len(all_posts)} Posts im Cache.")
+    return all_posts, normalized, str(newest_id) if newest_id is not None else None
 
 
 def download_image(url, post_id, index, image_dir):
@@ -476,13 +431,9 @@ def run_account(
     account_key = username.lower()
     public_base = public_image_base.rstrip("/")
 
-    # Vor dem API-Abruf den vorhandenen Cache lesen.
-    # So zählen neu eintreffende Beiträge nicht versehentlich
-    # zum Ausgangsbestand.
     post_cache = load_json(POST_CACHE_FILE, {})
     if not isinstance(post_cache, dict):
         post_cache = {}
-
     cached_posts = post_cache.get(account_key, [])
     if not isinstance(cached_posts, list):
         cached_posts = []
@@ -490,11 +441,9 @@ def run_account(
     cached_ids = [
         int(post["id"])
         for post in cached_posts
-        if isinstance(post, dict)
-        and str(post.get("id", "")).isdigit()
+        if isinstance(post, dict) and str(post.get("id", "")).isdigit()
     ]
 
-    # Startgrenze laden oder sicher initialisieren.
     start_ids = load_json(START_IDS_FILE, {})
     if not isinstance(start_ids, dict):
         start_ids = {}
@@ -503,57 +452,65 @@ def run_account(
         if not cached_ids:
             raise RuntimeError(
                 f"Kein vorhandener Post-Cache für @{username}. "
-                "Sicherer Neustart abgebrochen. "
-                "Start-ID zuerst manuell festlegen."
+                "Sicherer Start abgebrochen. Start-ID zuerst manuell festlegen."
             )
-
         start_ids[account_key] = str(max(cached_ids))
         save_json(START_IDS_FILE, start_ids)
-
-        print(
-            f"🔒 Startgrenze für @{username}: "
-            f"{start_ids[account_key]}"
-        )
+        print(f"🔒 Startgrenze für @{username}: {start_ids[account_key]}")
 
     start_id = int(start_ids[account_key])
 
-    # Alte Warteschlange vor der ersten Änderung sichern.
+    # Die API-ID beim ersten Start auf die Startgrenze setzen, damit keine
+    # historischen Posts durch einen Abruf ohne since_id in die Queue geraten.
+    api_state = load_json(API_STATE_FILE, {})
+    if not isinstance(api_state, dict):
+        api_state = {}
+    stored_api_id = api_state.get(account_key)
+    if not (stored_api_id and str(stored_api_id).isdigit()):
+        api_state[account_key] = str(start_id)
+        save_json(API_STATE_FILE, api_state)
+        print(f"🔖 API-Start-ID für @{username}: {start_id}")
+
     queue = load_json(DISCORD_QUEUE_FILE, {})
     if not isinstance(queue, dict):
         queue = {}
-
     if not QUEUE_BACKUP_FILE.exists():
         save_json(QUEUE_BACKUP_FILE, queue)
         print(f"🛟 Alte Warteschlange gesichert: {QUEUE_BACKUP_FILE}")
 
-    # Erst nach Festlegung der Startgrenze neue Beiträge abrufen.
-    posts = fetch_posts(username)
+    # all_posts dienen dem RSS-Feed; fetched_posts enthalten ausschließlich
+    # die Posts aus dieser neuen API-Abfrage und damit nur neue Queue-Kandidaten.
+    all_posts, fetched_posts, newest_api_id = fetch_posts(username)
 
-    queue_posts = []
+    # Bestehende Queue-Einträge behalten, damit ein fehlgeschlagener Discord-Lauf
+    # keine noch nicht gesendeten Posts verliert. IDs verhindern Duplikate.
+    existing_queue = queue.get(account_key, [])
+    if not isinstance(existing_queue, list):
+        existing_queue = []
+    queue_by_id = {
+        str(item.get("id")): item
+        for item in existing_queue
+        if isinstance(item, dict) and item.get("id")
+    }
 
-    for post in posts:
+    added_count = 0
+    for post in fetched_posts:
         post_id = str(post.get("id", "")).strip()
-
-        if not post_id.isdigit():
+        if not post_id.isdigit() or int(post_id) <= start_id:
             continue
-
-        # Keine Beiträge aus dem bisherigen Bestand nachsenden.
-        if int(post_id) <= start_id:
+        if post_id in queue_by_id:
             continue
 
         local_images = []
-
         for index, image_url in enumerate(post.get("media_urls", [])):
-            image = download_image(
-                image_url, post_id, index, image_dir
-            )
+            image = download_image(image_url, post_id, index, image_dir)
             if image:
                 local_images.append({
                     "path": str(image),
                     "url": f"{public_base}/{image.name}",
                 })
 
-        queue_posts.append({
+        queue_by_id[post_id] = {
             "id": post_id,
             "text": post.get("text", ""),
             "created_at": post.get("created_at", ""),
@@ -561,26 +518,30 @@ def run_account(
             "images": local_images,
             "is_repost": post.get("is_repost", False),
             "is_quote": post.get("is_quote", False),
-        })
+        }
+        added_count += 1
 
-    queue_posts.sort(
-        key=lambda item: int(item["id"]),
-        reverse=True,
+    queue[account_key] = sorted(
+        queue_by_id.values(), key=lambda item: int(item["id"]), reverse=True
     )
-
-    # Nur neue Beiträge in die aktive Discord-Warteschlange.
-    queue[account_key] = queue_posts
     save_json(DISCORD_QUEUE_FILE, queue)
 
+    # Cursor erst nach erfolgreichem Speichern der Queue weiterstellen.
+    # Falls keine Posts zurückkamen, bleibt die bisherige ID unverändert.
+    if newest_api_id and int(newest_api_id) > int(api_state[account_key]):
+        api_state[account_key] = newest_api_id
+        save_json(API_STATE_FILE, api_state)
+
     print(
-        f"📬 @{username}: {len(queue_posts)} Beiträge "
-        f"nach der Startgrenze in der Warteschlange."
+        f"📬 @{username}: {added_count} neue Posts ergänzt; "
+        f"{len(queue[account_key])} Einträge in der Warteschlange."
     )
 
     create_rss_feed(
         username,
-        posts,
+        all_posts,
         output_file,
         image_dir,
         public_base,
     )
+
