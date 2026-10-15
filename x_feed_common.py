@@ -16,6 +16,7 @@ DISCORD_QUEUE_FILE = Path("x_recent_posts.json")
 POST_CACHE_FILE = Path("x_posts_cache.json")
 LAST_POSTS_FILE = Path("last_posts.json")
 START_IDS_FILE = Path("x_discord_start_ids.json")
+QUEUE_BACKUP_FILE = Path("x_recent_posts_before_safe_restart.json")
 TIMEOUT = 30
 MAX_RSS_POSTS = 3
 
@@ -472,101 +473,109 @@ def create_rss_feed(
 def run_account(
     username, output_file, image_dir, public_image_base
 ):
-    posts = fetch_posts(username)
-    public_base = public_image_base.rstrip("/")
     account_key = username.lower()
+    public_base = public_image_base.rstrip("/")
 
-    queue = load_json(DISCORD_QUEUE_FILE, {})
-    if not isinstance(queue, dict):
-        queue = {}
+    # Vor dem API-Abruf den vorhandenen Cache lesen.
+    # So zählen neu eintreffende Beiträge nicht versehentlich
+    # zum Ausgangsbestand.
+    post_cache = load_json(POST_CACHE_FILE, {})
+    if not isinstance(post_cache, dict):
+        post_cache = {}
 
-    state = load_json(LAST_POSTS_FILE, {})
-    if not isinstance(state, dict):
-        state = {}
+    cached_posts = post_cache.get(account_key, [])
+    if not isinstance(cached_posts, list):
+        cached_posts = []
 
+    cached_ids = [
+        int(post["id"])
+        for post in cached_posts
+        if isinstance(post, dict)
+        and str(post.get("id", "")).isdigit()
+    ]
+
+    # Startgrenze laden oder sicher initialisieren.
     start_ids = load_json(START_IDS_FILE, {})
     if not isinstance(start_ids, dict):
         start_ids = {}
 
-    # Beim ersten Lauf den aktuellen Stand als Startgrenze setzen.
-    # Dadurch werden alte Cache-Beiträge nicht nachträglich versendet.
     if account_key not in start_ids:
-        ids = [
-            int(post["id"])
-            for post in posts
-            if str(post.get("id", "")).isdigit()
-        ]
-        start_ids[account_key] = max(ids, default=0)
+        if not cached_ids:
+            raise RuntimeError(
+                f"Kein vorhandener Post-Cache für @{username}. "
+                "Sicherer Neustart abgebrochen. "
+                "Start-ID zuerst manuell festlegen."
+            )
+
+        start_ids[account_key] = str(max(cached_ids))
         save_json(START_IDS_FILE, start_ids)
+
+        print(
+            f"🔒 Startgrenze für @{username}: "
+            f"{start_ids[account_key]}"
+        )
 
     start_id = int(start_ids[account_key])
 
-    old_queue = queue.get(account_key, [])
-    if not isinstance(old_queue, list):
-        old_queue = []
+    # Alte Warteschlange vor der ersten Änderung sichern.
+    queue = load_json(DISCORD_QUEUE_FILE, {})
+    if not isinstance(queue, dict):
+        queue = {}
 
-    sent_ids = set()
-    for key in (account_key,):
-        ids = state.get(key, [])
-        if isinstance(ids, list):
-            sent_ids.update(str(x) for x in ids)
+    if not QUEUE_BACKUP_FILE.exists():
+        save_json(QUEUE_BACKUP_FILE, queue)
+        print(f"🛟 Alte Warteschlange gesichert: {QUEUE_BACKUP_FILE}")
 
-    pending = {}
+    # Erst nach Festlegung der Startgrenze neue Beiträge abrufen.
+    posts = fetch_posts(username)
 
-    # Vorhandene offene Queue-Einträge behalten,
-    # solange sie nicht bereits als gesendet markiert sind.
-    for item in old_queue:
-        if not isinstance(item, dict):
-            continue
+    queue_posts = []
 
-        post_id = str(item.get("id", "")).strip()
-        if not post_id or not post_id.isdigit():
-            continue
-        if post_id in sent_ids:
-            continue
-
-        pending[post_id] = item
-
-    # Nur Beiträge nach der Startgrenze neu aufnehmen.
     for post in posts:
         post_id = str(post.get("id", "")).strip()
-        if not post_id or not post_id.isdigit():
-            continue
-        if int(post_id) <= start_id or post_id in sent_ids:
-            continue
-        if post_id in pending:
+
+        if not post_id.isdigit():
             continue
 
-        images = []
+        # Keine Beiträge aus dem bisherigen Bestand nachsenden.
+        if int(post_id) <= start_id:
+            continue
+
+        local_images = []
+
         for index, image_url in enumerate(post.get("media_urls", [])):
             image = download_image(
                 image_url, post_id, index, image_dir
             )
             if image:
-                images.append({
+                local_images.append({
                     "path": str(image),
                     "url": f"{public_base}/{image.name}",
                 })
 
-        pending[post_id] = {
+        queue_posts.append({
             "id": post_id,
             "text": post.get("text", ""),
             "created_at": post.get("created_at", ""),
             "url": post.get("url", ""),
-            "images": images,
+            "images": local_images,
             "is_repost": post.get("is_repost", False),
             "is_quote": post.get("is_quote", False),
-        }
+        })
 
-    queue[account_key] = sorted(
-        pending.values(),
-        key=lambda item: (
-            item.get("created_at", ""),
-            int(item["id"]),
-        ),
+    queue_posts.sort(
+        key=lambda item: int(item["id"]),
         reverse=True,
     )
+
+    # Nur neue Beiträge in die aktive Discord-Warteschlange.
+    queue[account_key] = queue_posts
     save_json(DISCORD_QUEUE_FILE, queue)
+
+    print(
+        f"📬 @{username}: {len(queue_posts)} Beiträge "
+        f"nach der Startgrenze in der Warteschlange."
+    )
 
     create_rss_feed(
         username,
@@ -575,9 +584,3 @@ def run_account(
         image_dir,
         public_base,
     )
-
-    print(
-        f"@{username}: {len(queue[account_key])} offene "
-        "Discord-Beiträge."
-    )
-
