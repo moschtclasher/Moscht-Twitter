@@ -15,7 +15,22 @@
       "is_quote": false
     }
   ],
-  "confusion_coc": [],
+  "confusion_coc": [
+    {
+      "id": "2110693110883955054",
+      "text": "BASE DESIGN 101 - META CHECK\n\n💎 Diamond. 📦 Box. ⭕ Ring. 🏝️ Island. 🧩 Hybrid.\n\nWe’ve explored the different concepts. But which one actually dominates the TH18 meta right now? Is there a clear winner, or does it all come down to the builder?\n\n@ClashWithWolfi what’s your take? https://t.co/VWLSLCgQpJ",
+      "created_at": "2026-10-15T11:23:47+00:00",
+      "url": "https://x.com/Confusion_CoC/status/2110693110883955054",
+      "images": [
+        {
+          "path": "images/confusion_coc/2110693110883955054.jpg",
+          "url": "https://moschtclasher.github.io/Moscht-Twitter/images/confusion_coc/2110693110883955054.jpg"
+        }
+      ],
+      "is_repost": false,
+      "is_quote": false
+    }
+  ],
   "twitch_lurmii": [],
   "clashwithwolfi": []
 }
