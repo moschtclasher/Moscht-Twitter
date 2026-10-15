@@ -464,21 +464,50 @@ def create_rss_feed(
     )
 
 
+
 def run_account(
     username, output_file, image_dir, public_image_base
 ):
     posts = fetch_posts(username)
     public_base = public_image_base.rstrip("/")
+    account_key = username.lower()
+
+    # Bestehende Discord-Warteschlange laden.
+    queue = load_json(DISCORD_QUEUE_FILE, {})
+    if not isinstance(queue, dict):
+        queue = {}
+
+    old_queue = queue.get(account_key, [])
+    if not isinstance(old_queue, list):
+        old_queue = []
+
+    # Bereits vorhandene Queue-Einträge nach Post-ID indizieren.
+    queued_by_id = {
+        str(item.get("id")): item
+        for item in old_queue
+        if isinstance(item, dict) and item.get("id")
+    }
+
     queue_posts = []
 
-    # Der Discord-Verlauf enthält mehr als die drei RSS-Einträge.
-    # So kann Discord auch mehrere neue Beiträge pro Intervall verarbeiten.
     for post in posts:
+        post_id = str(post.get("id", "")).strip()
+        if not post_id:
+            continue
+
+        # Vorhandene Einträge wiederverwenden, damit Bilder
+        # nicht bei jedem Lauf erneut heruntergeladen werden.
+        existing = queued_by_id.get(post_id)
+
+        if existing is not None:
+            queue_posts.append(existing)
+            continue
+
         local_images = []
 
-        for index, image_url in enumerate(post["media_urls"]):
+        for index, image_url in enumerate(post.get("media_urls", [])):
             image = download_image(
-                image_url, post["id"], index, image_dir
+                image_url, post_id, index, image_dir
             )
             if image:
                 local_images.append({
@@ -487,19 +516,26 @@ def run_account(
                 })
 
         queue_posts.append({
-            "id": post["id"],
-            "text": post["text"],
-            "created_at": post["created_at"],
-            "url": post["url"],
+            "id": post_id,
+            "text": post.get("text", ""),
+            "created_at": post.get("created_at", ""),
+            "url": post.get("url", ""),
             "images": local_images,
-            "is_repost": post["is_repost"],
-            "is_quote": post["is_quote"],
+            "is_repost": post.get("is_repost", False),
+            "is_quote": post.get("is_quote", False),
         })
 
-    queue = load_json(DISCORD_QUEUE_FILE, {})
-    queue[username.lower()] = queue_posts
+    # Neueste zuerst; der Discord-Poster sortiert beim Versand
+    # wieder chronologisch und verarbeitet offene Beiträge.
+    queue_posts.sort(
+        key=lambda item: int(item["id"]),
+        reverse=True,
+    )
+
+    queue[account_key] = queue_posts
     save_json(DISCORD_QUEUE_FILE, queue)
 
+    # RSS bleibt auf die drei neuesten Beiträge begrenzt.
     create_rss_feed(
         username,
         posts,
@@ -507,3 +543,4 @@ def run_account(
         image_dir,
         public_base,
     )
+
