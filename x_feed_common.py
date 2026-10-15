@@ -335,9 +335,18 @@ def fetch_posts(username):
     return all_posts
 
 
+
 def download_image(url, post_id, index, image_dir):
     image_dir = Path(image_dir)
     image_dir.mkdir(parents=True, exist_ok=True)
+
+    suffix = "" if index == 0 else f"_{index + 1}"
+
+    # Die üblichen Dateiendungen prüfen, ohne X erneut anzufragen.
+    for ext in (".jpg", ".png", ".webp", ".gif"):
+        target = image_dir / f"{post_id}{suffix}{ext}"
+        if target.is_file() and target.stat().st_size > 0:
+            return target
 
     try:
         response = requests.get(
@@ -361,22 +370,14 @@ def download_image(url, post_id, index, image_dir):
         else:
             ext = ".jpg"
 
-        suffix = "" if index == 0 else f"_{index + 1}"
         target = image_dir / f"{post_id}{suffix}{ext}"
-
-        # Bereits vorhandene Dateien nicht erneut herunterladen/schreiben.
-        if target.exists():
-            old_hash = hashlib.sha256(target.read_bytes()).hexdigest()
-            new_hash = hashlib.sha256(content).hexdigest()
-            if old_hash == new_hash:
-                return target
-
         target.write_bytes(content)
         return target
 
     except requests.RequestException as exc:
         print(f"Bild konnte nicht geladen werden: {exc}")
         return None
+
 
 
 def create_rss_feed(
@@ -465,6 +466,7 @@ def create_rss_feed(
 
 
 
+
 def run_account(
     username, output_file, image_dir, public_image_base
 ):
@@ -472,40 +474,95 @@ def run_account(
     public_base = public_image_base.rstrip("/")
     account_key = username.lower()
 
-    # Bestehende Discord-Warteschlange laden.
+    # Bestehende Warteschlange und Versandstatus laden.
     queue = load_json(DISCORD_QUEUE_FILE, {})
     if not isinstance(queue, dict):
         queue = {}
+
+    state = load_json(LAST_POSTS_FILE, {})
+    if not isinstance(state, dict):
+        state = {}
 
     old_queue = queue.get(account_key, [])
     if not isinstance(old_queue, list):
         old_queue = []
 
-    # Bereits vorhandene Queue-Einträge nach Post-ID indizieren.
-    queued_by_id = {
-        str(item.get("id")): item
-        for item in old_queue
-        if isinstance(item, dict) and item.get("id")
+    # Gesendete IDs aus aktuellem und altem Status übernehmen.
+    legacy_key_by_account = {
+        "moscht_coc": "feed.xml",
+        "confusion_coc": "feed-confusion.xml",
+        "twitch_lurmii": "feed-lurmii.xml",
+        "clashwithwolfi": "feed-wolfi.xml",
     }
+    sent_ids = set()
 
-    queue_posts = []
+    for key in (
+        account_key,
+        legacy_key_by_account.get(account_key, ""),
+    ):
+        ids = state.get(key, [])
+        if isinstance(ids, list):
+            sent_ids.update(str(post_id) for post_id in ids)
 
+    numeric_sent_ids = [
+        int(post_id)
+        for post_id in sent_ids
+        if post_id.isdigit()
+    ]
+    latest_sent_id = max(numeric_sent_ids, default=0)
+
+    # Vorhandene offene Einträge zunächst übernehmen.
+    # Bereits gesendete und sehr alte Einträge nicht erneut einreihen.
+    pending_by_id = {}
+
+    for item in old_queue:
+        if not isinstance(item, dict):
+            continue
+
+        post_id = str(item.get("id", "")).strip()
+        if not post_id or not post_id.isdigit():
+            continue
+        if post_id in sent_ids:
+            continue
+        if int(post_id) <= latest_sent_id:
+            continue
+
+        pending_by_id[post_id] = item
+
+    # Cache-Beiträge ergänzen, aber keine alte Historie nachliefern.
     for post in posts:
         post_id = str(post.get("id", "")).strip()
-        if not post_id:
+        if not post_id or not post_id.isdigit():
+            continue
+        if post_id in sent_ids:
+            continue
+        if int(post_id) <= latest_sent_id:
             continue
 
-        # Vorhandene Einträge wiederverwenden, damit Bilder
-        # nicht bei jedem Lauf erneut heruntergeladen werden.
-        existing = queued_by_id.get(post_id)
+        # Vorhandene Queue-Einträge wiederverwenden.
+        if post_id in pending_by_id:
+            existing = pending_by_id[post_id]
 
-        if existing is not None:
-            queue_posts.append(existing)
-            continue
+            # Fehlende Bilddateien bei Bedarf neu laden.
+            images = existing.get("images", [])
+            if not isinstance(images, list):
+                images = []
+
+            valid_images = [
+                image for image in images
+                if isinstance(image, dict)
+                and image.get("path")
+                and Path(image["path"]).is_file()
+            ]
+
+            if len(valid_images) == len(images):
+                continue
 
         local_images = []
 
-        for index, image_url in enumerate(post.get("media_urls", [])):
+        for index, image_url in enumerate(
+            post.get("media_urls", [])
+        ):
             image = download_image(
                 image_url, post_id, index, image_dir
             )
@@ -515,7 +572,7 @@ def run_account(
                     "url": f"{public_base}/{image.name}",
                 })
 
-        queue_posts.append({
+        pending_by_id[post_id] = {
             "id": post_id,
             "text": post.get("text", ""),
             "created_at": post.get("created_at", ""),
@@ -523,12 +580,15 @@ def run_account(
             "images": local_images,
             "is_repost": post.get("is_repost", False),
             "is_quote": post.get("is_quote", False),
-        })
+        }
 
-    # Neueste zuerst; der Discord-Poster sortiert beim Versand
-    # wieder chronologisch und verarbeitet offene Beiträge.
-    queue_posts.sort(
-        key=lambda item: int(item["id"]),
+    # Neueste zuerst speichern; der Poster sendet chronologisch.
+    queue_posts = sorted(
+        pending_by_id.values(),
+        key=lambda item: (
+            item.get("created_at", ""),
+            int(item["id"]),
+        ),
         reverse=True,
     )
 
@@ -544,3 +604,7 @@ def run_account(
         public_base,
     )
 
+    print(
+        f"@{username}: {len(queue_posts)} offene Discord-Beiträge "
+        "in der Warteschlange."
+    )
