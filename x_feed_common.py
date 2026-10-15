@@ -139,7 +139,7 @@ def fetch_posts(username):
     last_id = api_state.get(account_key)
 
     params = {
-        "max_results": 6,
+        "max_results": 2,
         "exclude": "replies",
         "tweet.fields": (
             "created_at,referenced_tweets,attachments,author_id"
