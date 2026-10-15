@@ -15,6 +15,7 @@ USER_CACHE_FILE = Path("x_user_ids.json")
 DISCORD_QUEUE_FILE = Path("x_recent_posts.json")
 POST_CACHE_FILE = Path("x_posts_cache.json")
 LAST_POSTS_FILE = Path("last_posts.json")
+START_IDS_FILE = Path("x_discord_start_ids.json")
 TIMEOUT = 30
 MAX_RSS_POSTS = 3
 
@@ -467,6 +468,7 @@ def create_rss_feed(
 
 
 
+
 def run_account(
     username, output_file, image_dir, public_image_base
 ):
@@ -474,7 +476,6 @@ def run_account(
     public_base = public_image_base.rstrip("/")
     account_key = username.lower()
 
-    # Bestehende Warteschlange und Versandstatus laden.
     queue = load_json(DISCORD_QUEUE_FILE, {})
     if not isinstance(queue, dict):
         queue = {}
@@ -483,38 +484,37 @@ def run_account(
     if not isinstance(state, dict):
         state = {}
 
+    start_ids = load_json(START_IDS_FILE, {})
+    if not isinstance(start_ids, dict):
+        start_ids = {}
+
+    # Beim ersten Lauf den aktuellen Stand als Startgrenze setzen.
+    # Dadurch werden alte Cache-Beiträge nicht nachträglich versendet.
+    if account_key not in start_ids:
+        ids = [
+            int(post["id"])
+            for post in posts
+            if str(post.get("id", "")).isdigit()
+        ]
+        start_ids[account_key] = max(ids, default=0)
+        save_json(START_IDS_FILE, start_ids)
+
+    start_id = int(start_ids[account_key])
+
     old_queue = queue.get(account_key, [])
     if not isinstance(old_queue, list):
         old_queue = []
 
-    # Gesendete IDs aus aktuellem und altem Status übernehmen.
-    legacy_key_by_account = {
-        "moscht_coc": "feed.xml",
-        "confusion_coc": "feed-confusion.xml",
-        "twitch_lurmii": "feed-lurmii.xml",
-        "clashwithwolfi": "feed-wolfi.xml",
-    }
     sent_ids = set()
-
-    for key in (
-        account_key,
-        legacy_key_by_account.get(account_key, ""),
-    ):
+    for key in (account_key,):
         ids = state.get(key, [])
         if isinstance(ids, list):
-            sent_ids.update(str(post_id) for post_id in ids)
+            sent_ids.update(str(x) for x in ids)
 
-    numeric_sent_ids = [
-        int(post_id)
-        for post_id in sent_ids
-        if post_id.isdigit()
-    ]
-    latest_sent_id = max(numeric_sent_ids, default=0)
+    pending = {}
 
-    # Vorhandene offene Einträge zunächst übernehmen.
-    # Bereits gesendete und sehr alte Einträge nicht erneut einreihen.
-    pending_by_id = {}
-
+    # Vorhandene offene Queue-Einträge behalten,
+    # solange sie nicht bereits als gesendet markiert sind.
     for item in old_queue:
         if not isinstance(item, dict):
             continue
@@ -524,78 +524,50 @@ def run_account(
             continue
         if post_id in sent_ids:
             continue
-        if int(post_id) <= latest_sent_id:
-            continue
 
-        pending_by_id[post_id] = item
+        pending[post_id] = item
 
-    # Cache-Beiträge ergänzen, aber keine alte Historie nachliefern.
+    # Nur Beiträge nach der Startgrenze neu aufnehmen.
     for post in posts:
         post_id = str(post.get("id", "")).strip()
         if not post_id or not post_id.isdigit():
             continue
-        if post_id in sent_ids:
+        if int(post_id) <= start_id or post_id in sent_ids:
             continue
-        if int(post_id) <= latest_sent_id:
+        if post_id in pending:
             continue
 
-        # Vorhandene Queue-Einträge wiederverwenden.
-        if post_id in pending_by_id:
-            existing = pending_by_id[post_id]
-
-            # Fehlende Bilddateien bei Bedarf neu laden.
-            images = existing.get("images", [])
-            if not isinstance(images, list):
-                images = []
-
-            valid_images = [
-                image for image in images
-                if isinstance(image, dict)
-                and image.get("path")
-                and Path(image["path"]).is_file()
-            ]
-
-            if len(valid_images) == len(images):
-                continue
-
-        local_images = []
-
-        for index, image_url in enumerate(
-            post.get("media_urls", [])
-        ):
+        images = []
+        for index, image_url in enumerate(post.get("media_urls", [])):
             image = download_image(
                 image_url, post_id, index, image_dir
             )
             if image:
-                local_images.append({
+                images.append({
                     "path": str(image),
                     "url": f"{public_base}/{image.name}",
                 })
 
-        pending_by_id[post_id] = {
+        pending[post_id] = {
             "id": post_id,
             "text": post.get("text", ""),
             "created_at": post.get("created_at", ""),
             "url": post.get("url", ""),
-            "images": local_images,
+            "images": images,
             "is_repost": post.get("is_repost", False),
             "is_quote": post.get("is_quote", False),
         }
 
-    # Neueste zuerst speichern; der Poster sendet chronologisch.
-    queue_posts = sorted(
-        pending_by_id.values(),
+    queue[account_key] = sorted(
+        pending.values(),
         key=lambda item: (
             item.get("created_at", ""),
             int(item["id"]),
         ),
         reverse=True,
     )
-
-    queue[account_key] = queue_posts
     save_json(DISCORD_QUEUE_FILE, queue)
 
-    # RSS bleibt auf die drei neuesten Beiträge begrenzt.
     create_rss_feed(
         username,
         posts,
@@ -605,6 +577,7 @@ def run_account(
     )
 
     print(
-        f"@{username}: {len(queue_posts)} offene Discord-Beiträge "
-        "in der Warteschlange."
+        f"@{username}: {len(queue[account_key])} offene "
+        "Discord-Beiträge."
     )
+
