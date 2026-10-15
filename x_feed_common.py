@@ -13,6 +13,8 @@ API_BASE = "https://api.x.com/2"
 TOKEN = os.getenv("X_BEARER_TOKEN", "").strip()
 USER_CACHE_FILE = Path("x_user_ids.json")
 DISCORD_QUEUE_FILE = Path("x_recent_posts.json")
+POST_CACHE_FILE = Path("x_posts_cache.json")
+LAST_POSTS_FILE = Path("last_posts.json")
 TIMEOUT = 30
 MAX_RSS_POSTS = 3
 
@@ -87,6 +89,20 @@ def get_user_id(username):
     print(f"User-ID für @{username} gespeichert.")
     return str(user["id"])
 
+def get_last_sent_id(username):
+    state = load_json(LAST_POSTS_FILE, {})
+    ids = state.get(username.lower(), [])
+
+    if not isinstance(ids, list):
+        return None
+
+    numeric_ids = [
+        int(post_id)
+        for post_id in ids
+        if str(post_id).isdigit()
+    ]
+
+    return str(max(numeric_ids)) if numeric_ids else None
 
 def parse_created_at(value):
     if not value:
@@ -100,6 +116,17 @@ def parse_created_at(value):
 def fetch_posts(username):
     user_id = get_user_id(username)
 
+    post_cache = load_json(POST_CACHE_FILE, {})
+    cached_posts = post_cache.get(username.lower(), [])
+    
+    cached_ids = [
+        int(post["id"])
+        for post in cached_posts
+        if str(post.get("id", "")).isdigit()
+    ]
+    
+    last_cached_id = str(max(cached_ids)) if cached_ids else None
+    
     params = {
         "max_results": 100,
         "exclude": "replies",
@@ -117,6 +144,18 @@ def fetch_posts(username):
         "user.fields": "username,name",
     }
 
+    if last_cached_id:
+        params["since_id"] = last_cached_id
+        print(
+            f"@{username}: Suche nach neuen Posts seit "
+            f"{last_cached_id}."
+        )
+    else:
+        print(
+            f"@{username}: Noch kein Cache vorhanden. "
+            "Initialer Abruf."
+        )
+    
     result = request_json(
         f"{API_BASE}/users/{user_id}/tweets", params
     )
@@ -265,9 +304,35 @@ def fetch_posts(username):
     normalized.sort(
         key=lambda p: p["created_at"], reverse=True
     )
-
-    print(f"@{username}: {len(normalized)} Beiträge von der API geladen.")
-    return normalized
+    
+    # Neue und bereits gespeicherte Posts zusammenführen.
+    merged = {
+        str(post["id"]): post
+        for post in cached_posts
+        if post.get("id")
+    }
+    
+    for post in normalized:
+        merged[str(post["id"])] = post
+    
+    all_posts = sorted(
+        merged.values(),
+        key=lambda p: p["created_at"],
+        reverse=True,
+    )
+    
+    # Cache begrenzen, damit die Datei nicht unbegrenzt wächst.
+    all_posts = all_posts[:500]
+    
+    post_cache[username.lower()] = all_posts
+    save_json(POST_CACHE_FILE, post_cache)
+    
+    print(
+        f"@{username}: {len(normalized)} neue API-Ergebnisse, "
+        f"{len(all_posts)} Posts im Cache."
+    )
+    
+    return all_posts
 
 
 def download_image(url, post_id, index, image_dir):
