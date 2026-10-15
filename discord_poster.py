@@ -243,40 +243,34 @@ def main():
             print("Keine Beiträge im API-Verlauf.")
             continue
             
+
         sent_ids = {
             str(x) for x in state.get(feed["key"], [])
         }
-        
-        # Die höchste bereits gespeicherte X-Post-ID dient
-        # als Grenze: Ältere Beiträge werden nicht nachträglich gesendet.
-        numeric_sent_ids = [
-            int(x) for x in sent_ids if x.isdigit()
-        ]
-        latest_known_id = max(numeric_sent_ids, default=0)
-        
+
         unsent = []
-        
+
         for post in posts:
             post_id = str(post.get("id", "")).strip()
-        
-            if not post_id or post_id in sent_ids:
+
+            if not post_id or not post_id.isdigit():
                 continue
-        
-            # Nur gültige numerische X-Post-IDs berücksichtigen.
-            if not post_id.isdigit():
+
+            # Nur Beiträge überspringen, deren ID tatsächlich
+            # im gespeicherten Versandstatus enthalten ist.
+            if post_id in sent_ids:
                 continue
-        
-            # Keine älteren, bisher nicht gespeicherten Beiträge nachsenden.
-            if int(post_id) <= latest_known_id:
-                print(
-                    f"⏭️ Älterer Beitrag übersprungen: {post_id}"
-                )
-                continue
-        
+
             unsent.append(post)
 
-        # Chronologisch senden: älteste neue Beiträge zuerst.
-        unsent.sort(key=lambda post: post.get("created_at", ""))
+        # Älteste offene Beiträge zuerst senden.
+        unsent.sort(
+            key=lambda post: (
+                post.get("created_at", ""),
+                int(post["id"]),
+            )
+        )
+
 
         # Wenn für diesen Feed kein Versandstatus existiert,
         # nichts automatisch senden. Erst den Status sicher prüfen.
